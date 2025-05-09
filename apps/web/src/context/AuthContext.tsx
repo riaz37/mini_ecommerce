@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiClient } from '@/lib/api/client';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { apiClient } from "@/lib/api/client";
 
 type User = {
   id: string;
   email: string;
   name?: string;
   role?: string;
+  customerId?: string;
 };
 
 type AuthContextType = {
@@ -15,7 +22,12 @@ type AuthContextType = {
   isLoading: boolean;
   error: string | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (userData: { email: string; password: string; firstName: string; lastName: string }) => Promise<void>;
+  register: (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 };
@@ -31,23 +43,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Try to get current user with existing credentials
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          const user = await apiClient('auth/me', { 
-            method: 'GET',
-            requireAuth: true 
-          });
-          setUser(user);
-        }
+        // Try to get current user with existing credentials (cookies)
+        const userData = await apiClient("auth/me", {
+          method: "GET",
+          requireAuth: true,
+        });
+
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          role: userData.role,
+          customerId: userData.customerId,
+        });
       } catch (err) {
         // Not authenticated, that's okay
-        localStorage.removeItem('auth_token');
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, []);
 
@@ -55,48 +71,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient('auth/login', {
-        method: 'POST',
+      const response = await apiClient("auth/login", {
+        method: "POST",
         body: credentials,
       });
-      
-      localStorage.setItem('auth_token', response.access_token);
-      setUser(response.user);
+
+      // No need to store token in localStorage - it's in HTTP-only cookies
+      setUser({
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+        role: response.user.role,
+        customerId: response.user.customerId,
+      });
     } catch (err) {
-      setError('Invalid email or password');
+      setError("Invalid email or password");
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (userData: { 
-    email: string; 
-    password: string; 
+  const register = async (userData: {
+    email: string;
+    password: string;
     firstName: string;
     lastName: string;
   }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await apiClient('auth/register', {
-        method: 'POST',
+      await apiClient("auth/register", {
+        method: "POST",
         body: userData,
       });
-      
+
       // After registration, log the user in
-      const loginResponse = await apiClient('auth/login', {
-        method: 'POST',
+      const loginResponse = await apiClient("auth/login", {
+        method: "POST",
         body: {
           email: userData.email,
           password: userData.password,
         },
       });
-      
-      localStorage.setItem('auth_token', loginResponse.access_token);
-      setUser(loginResponse.user);
+
+      // No need to store token in localStorage - it's in HTTP-only cookies
+      setUser({
+        id: loginResponse.user.id,
+        email: loginResponse.user.email,
+        name: loginResponse.user.name,
+        role: loginResponse.user.role,
+        customerId: loginResponse.user.customerId,
+      });
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError("Registration failed. Please try again.");
       throw err;
     } finally {
       setIsLoading(false);
@@ -106,12 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await apiClient('auth/logout', {
-        method: 'POST',
+      await apiClient("auth/logout", {
+        method: "POST",
       });
-    } finally {
-      localStorage.removeItem('auth_token');
+
+      // No need to remove from localStorage
       setUser(null);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -121,7 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, error, login, register, logout, clearError }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, error, login, register, logout, clearError }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -130,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

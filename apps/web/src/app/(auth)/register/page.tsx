@@ -46,7 +46,7 @@ export default function RegisterPage() {
         lastName: data.lastName,
         email: data.email,
         password: data.password,
-      });
+    });
 
       // Redirect to dashboard or home page after successful registration
       router.push("/");

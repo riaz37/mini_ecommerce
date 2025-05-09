@@ -1,27 +1,26 @@
-// API client for making requests to the backend
+// Define the API base URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-
-interface ApiOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type ApiOptions = {
+  method?: string;
   body?: any;
   headers?: Record<string, string>;
   requireAuth?: boolean;
-}
+};
 
 export async function apiClient(
   endpoint: string,
-  { method = 'GET', body, headers = {}, requireAuth = false }: ApiOptions = {}
+  { method = "GET", body, headers = {}, requireAuth = false }: ApiOptions = {},
 ) {
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  
+  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
   const options: RequestInit = {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...headers,
     },
-    credentials: 'include', // Include cookies for auth and session
+    credentials: "include", // Include cookies for auth and session
   };
 
   if (requireAuth) {
@@ -34,20 +33,12 @@ export async function apiClient(
   }
 
   const response = await fetch(url, options);
-  
-  // Handle HTTP errors
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.message || response.statusText;
-    const error = new Error(errorMessage);
-    throw error;
+    const errorMessage = errorData.message || response.statusText || 'Something went wrong';
+    throw new Error(errorMessage);
   }
-  
-  // Check if response is empty
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return await response.json();
-  }
-  
-  return {};
+
+  return response.json();
 }

@@ -1,11 +1,10 @@
+"use client";
 
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { getProducts } from '@/lib/api/products';
-import { Product, ProductFilters } from '@/lib/types';
-import ProductCard from './ProductCard';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import React, { useState, useEffect } from "react";
+import { getProducts } from "@/lib/api/products";
+import { Product, ProductFilters } from "@/lib/types";
+import ProductCard from "./ProductCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface ProductListProps {
   initialFilters?: ProductFilters;
@@ -25,8 +24,8 @@ export default function ProductList({ initialFilters = {} }: ProductListProps) {
         setProducts(data);
         setError(null);
       } catch (error) {
-        console.error('Error fetching products:', error);
-        setError('Failed to load products. Please try again later.');
+        console.error("Error fetching products:", error);
+        setError("Failed to load products. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -36,7 +35,7 @@ export default function ProductList({ initialFilters = {} }: ProductListProps) {
   }, [filters]);
 
   const updateFilters = (newFilters: Partial<ProductFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
   if (loading) {
@@ -50,9 +49,11 @@ export default function ProductList({ initialFilters = {} }: ProductListProps) {
   if (error) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-xl font-medium text-gray-900 mb-2">Something went wrong</h3>
+        <h3 className="text-xl font-medium text-gray-900 mb-2">
+          Something went wrong
+        </h3>
         <p className="text-gray-600 mb-4">{error}</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
         >
@@ -65,8 +66,12 @@ export default function ProductList({ initialFilters = {} }: ProductListProps) {
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-xl font-medium text-gray-900 mb-2">No products found</h3>
-        <p className="text-gray-600">Try adjusting your filters or search criteria.</p>
+        <h3 className="text-xl font-medium text-gray-900 mb-2">
+          No products found
+        </h3>
+        <p className="text-gray-600">
+          Try adjusting your filters or search criteria.
+        </p>
       </div>
     );
   }
@@ -79,4 +84,3 @@ export default function ProductList({ initialFilters = {} }: ProductListProps) {
     </div>
   );
 }
-

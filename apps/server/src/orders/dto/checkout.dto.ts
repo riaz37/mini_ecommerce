@@ -1,20 +1,58 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEnum,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+export class ShippingAddressDto {
+  @IsString()
+  fullName: string;
+
+  @IsString()
+  address1: string;
+
+  @IsOptional()
+  @IsString()
+  address2?: string;
+
+  @IsString()
+  city: string;
+
+  @IsString()
+  state: string;
+
+  @IsString()
+  postalCode: string;
+
+  @IsString()
+  country: string;
+
+  @IsString()
+  phone: string;
+}
+
+export class PaymentMethodDto {
+  @IsEnum(['credit_card', 'paypal'])
+  type: 'credit_card' | 'paypal';
+}
 
 export class CheckoutDto {
-  @ApiProperty({
-    example: 'session-123456',
-    description: 'Session ID associated with the cart',
-  })
   @IsString()
-  @IsNotEmpty()
   sessionId: string;
 
-  @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'Customer ID for the order',
-  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  customerId: string;
+  customerId?: string;
+
+  @ValidateNested()
+  @Type(() => ShippingAddressDto)
+  shippingAddress: ShippingAddressDto;
+
+  @ValidateNested()
+  @Type(() => PaymentMethodDto)
+  paymentMethod: PaymentMethodDto;
 }

@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 export interface CartItem {
   productId: string;
@@ -14,8 +14,8 @@ export interface Cart {
 
 // Create a new cart session
 export async function createCartSession(): Promise<{ sessionId: string }> {
-  return await apiClient('/cart/session', {
-    method: 'POST',
+  return await apiClient("/cart/session", {
+    method: "POST",
   });
 }
 
@@ -23,35 +23,47 @@ export async function getCart(sessionId: string): Promise<Cart> {
   return await apiClient(`/cart?sessionId=${sessionId}`);
 }
 
-export async function addToCart(sessionId: string, productId: string, quantity: number) {
-  return await apiClient('/cart', {
-    method: 'POST',
-    body: { sessionId, productId, quantity },
+export async function addToCart(
+  productId: string,
+  quantity: number,
+) {
+  // No need to pass sessionId as it's in cookies
+  return await apiClient("/cart/add", {
+    method: "POST",
+    body: { productId, quantity },
   });
 }
 
-export async function updateCartItem(sessionId: string, productId: string, quantity: number) {
+export async function updateCartItem(
+  productId: string,
+  quantity: number,
+) {
+  // No need to pass sessionId as it's in cookies
   return await apiClient(`/cart/items/${productId}`, {
-    method: 'PUT',
-    body: { sessionId, quantity },
+    method: "PUT",
+    body: { quantity },
   });
 }
 
-export async function removeCartItem(sessionId: string, productId: string) {
-  return await apiClient(`/cart/items/${productId}?sessionId=${sessionId}`, {
-    method: 'DELETE',
+export async function removeCartItem(
+  productId: string,
+) {
+  // No need to pass sessionId as it's in cookies
+  return await apiClient(`/cart/items/${productId}`, {
+    method: "DELETE",
   });
 }
 
-export async function clearCart(sessionId: string) {
-  return await apiClient(`/cart?sessionId=${sessionId}`, {
-    method: 'DELETE',
+export async function clearCart() {
+  // No need to pass sessionId as it's in cookies
+  return await apiClient(`/cart`, {
+    method: "DELETE",
   });
 }
 
 export async function mergeCart(sessionId: string) {
-  return await apiClient('/cart/merge', {
-    method: 'POST',
+  return await apiClient("/cart/merge", {
+    method: "POST",
     body: { sessionId },
     requireAuth: true,
   });

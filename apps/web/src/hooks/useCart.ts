@@ -3,21 +3,21 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Product } from "@/lib/types";
-import { 
+import {
   addItem as addToCartAction,
   removeItem as removeItemAction,
   updateQuantity as updateQuantityAction,
   clearCart as clearCartAction,
   hydrateCart,
-  setSessionId
+  setSessionId,
 } from "@/store/cartSlice";
-import { 
+import {
   getCart,
   addToCart,
   updateCartItem,
   removeCartItem,
   clearCart as clearCartApi,
-  createCartSession
+  createCartSession,
 } from "@/lib/api/cart";
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/context/AuthContext";
@@ -56,23 +56,27 @@ export function useCart() {
   useEffect(() => {
     const fetchCart = async () => {
       if (!sessionId) return;
-      
+
       setIsLoading(true);
       try {
         const serverCart = await getCart(sessionId);
-        
+
         // Update Redux store with server cart from Redis
-        dispatch(hydrateCart({
-          sessionId,
-          items: serverCart.items.map(item => ({
-            id: item.productId,
-            productId: item.productId,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-          })),
-          total: serverCart.total
-        }));
+        dispatch(
+          hydrateCart({
+            sessionId,
+            items: serverCart.items.map((item) => ({
+              id: item.productId, // Keep this for backward compatibility
+              productId: item.productId,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              // Add image if available
+              ...(item.image && { image: item.image }),
+            })),
+            total: serverCart.total,
+          }),
+        );
       } catch (err) {
         console.error("Failed to fetch cart from Redis:", err);
       } finally {
@@ -90,27 +94,31 @@ export function useCart() {
         try {
           setIsLoading(true);
           // Call API to merge carts in Redis
-          await apiClient('/cart/merge', {
-            method: 'POST',
+          await apiClient("/cart/merge", {
+            method: "POST",
             body: { sessionId },
             requireAuth: true,
           });
-          
+
           // Fetch the merged cart
           const mergedCart = await getCart(sessionId);
-          
+
           // Update Redux with the merged cart from Redis
-          dispatch(hydrateCart({
-            sessionId,
-            items: mergedCart.items.map(item => ({
-              id: item.productId,
-              productId: item.productId,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity
-            })),
-            total: mergedCart.total
-          }));
+          dispatch(
+            hydrateCart({
+              sessionId,
+              items: mergedCart.items.map((item) => ({
+                id: item.productId, // Keep this for backward compatibility
+                productId: item.productId,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                // Add image if available
+                ...(item.image && { image: item.image }),
+              })),
+              total: mergedCart.total,
+            }),
+          );
         } catch (err) {
           console.error("Failed to merge carts:", err);
         } finally {
@@ -118,35 +126,35 @@ export function useCart() {
         }
       }
     };
-    
+
     mergeCartsAfterLogin();
   }, [user?.id, sessionId, dispatch]);
 
-  const addItem = async (product: Product, quantity: number) => {
+  const addToCart = async (productId: string, quantity: number) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      // Add to Redis cart
-      const updatedCart = await addToCart(sessionId, product.id, quantity);
+      const response = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        }),
+        credentials: "include", // Important for cookies
+      });
 
-      // Update Redux store with the response from Redis
-      dispatch(hydrateCart({
-        sessionId,
-        items: updatedCart.items.map(item => ({
-          id: item.productId,
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        total: updatedCart.total
-      }));
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to add item to cart")
-      );
-      throw err;
+      if (!response.ok) {
+        throw new Error("Failed to add item to cart");
+      }
+
+      const updatedCart = await response.json();
+      dispatch(hydrateCart(updatedCart));
+      return updatedCart;
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -157,24 +165,30 @@ export function useCart() {
     setError(null);
 
     try {
-      // Remove from Redis cart
-      const updatedCart = await removeCartItem(sessionId, productId);
+      // Remove from Redis cart - no need to pass sessionId
+      const updatedCart = await removeCartItem(productId);
 
       // Update Redux store with the response from Redis
-      dispatch(hydrateCart({
-        sessionId,
-        items: updatedCart.items.map(item => ({
-          id: item.productId,
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        total: updatedCart.total
-      }));
+      dispatch(
+        hydrateCart({
+          sessionId,
+          items: updatedCart.items.map((item) => ({
+            id: item.productId, // Keep this for backward compatibility
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            // Add image if available
+            ...(item.image && { image: item.image }),
+          })),
+          total: updatedCart.total,
+        }),
+      );
     } catch (err) {
       setError(
-        err instanceof Error ? err : new Error("Failed to remove item from cart")
+        err instanceof Error
+          ? err
+          : new Error("Failed to remove item from cart"),
       );
       throw err;
     } finally {
@@ -187,24 +201,28 @@ export function useCart() {
     setError(null);
 
     try {
-      // Update Redis cart
-      const updatedCart = await updateCartItem(sessionId, productId, quantity);
+      // Update Redis cart - no need to pass sessionId
+      const updatedCart = await updateCartItem(productId, quantity);
 
       // Update Redux store with the response from Redis
-      dispatch(hydrateCart({
-        sessionId,
-        items: updatedCart.items.map(item => ({
-          id: item.productId,
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        total: updatedCart.total
-      }));
+      dispatch(
+        hydrateCart({
+          sessionId,
+          items: updatedCart.items.map((item) => ({
+            id: item.productId, // Keep this for backward compatibility
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            // Add image if available
+            ...(item.image && { image: item.image }),
+          })),
+          total: updatedCart.total,
+        }),
+      );
     } catch (err) {
       setError(
-        err instanceof Error ? err : new Error("Failed to update cart item")
+        err instanceof Error ? err : new Error("Failed to update cart item"),
       );
       throw err;
     } finally {
@@ -217,15 +235,13 @@ export function useCart() {
     setError(null);
 
     try {
-      // Clear Redis cart
-      await clearCartApi(sessionId);
+      // Clear Redis cart - no need to pass sessionId
+      await clearCartApi();
 
       // Update Redux store
       dispatch(clearCartAction());
     } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to clear cart")
-      );
+      setError(err instanceof Error ? err : new Error("Failed to clear cart"));
       throw err;
     } finally {
       setIsLoading(false);

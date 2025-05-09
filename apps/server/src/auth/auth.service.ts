@@ -32,10 +32,15 @@ export class AuthService {
     };
   }
 
-  async register(email: string, password: string, firstName: string, lastName: string) {
+  async register(
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+  ) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const name = `${firstName} ${lastName}`;
-    
+
     // Create user
     const user = await this.prisma.user.create({
       data: {
@@ -80,5 +85,12 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException();
     }
+  }
+
+  async getCustomerByEmail(email: string) {
+    return this.prisma.customer.findUnique({
+      where: { email },
+      select: { id: true },
+    });
   }
 }

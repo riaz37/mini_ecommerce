@@ -9,17 +9,15 @@ export default function CartSummary() {
   const { cart, isLoading, clearCart } = useCart();
   const [isClearing, setIsClearing] = React.useState(false);
 
-  // Calculate subtotal
-  const subtotal = cart.total;
+  // Use values from the cart
+  const subtotal = cart.subtotal || cart.total;
+  const tax = cart.tax || subtotal * 0.08;
 
   // Calculate shipping (free over $50)
   const shipping = subtotal > 50 ? 0 : 5.99;
 
-  // Calculate tax (assume 8%)
-  const tax = subtotal * 0.08;
-
   // Calculate total
-  const total = subtotal + shipping + tax;
+  const total = cart.total || subtotal + shipping + tax;
 
   const handleClearCart = async () => {
     setIsClearing(true);
@@ -58,7 +56,7 @@ export default function CartSummary() {
           </div>
 
           <div className="mt-4">
-            <button 
+            <button
               onClick={handleClearCart}
               disabled={isClearing || cart.items.length === 0}
               className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
@@ -66,7 +64,7 @@ export default function CartSummary() {
               {isClearing ? (
                 <LoadingSpinner size="sm" color="white" text="Clearing..." />
               ) : (
-                'Clear Cart'
+                "Clear Cart"
               )}
             </button>
           </div>

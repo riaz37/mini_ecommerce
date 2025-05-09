@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { Product } from '@/lib/types';
-import { useCart } from '@/hooks/useCart';
-import Rating from '@/components/ui/Rating';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import React, { useState } from "react";
+import Link from "next/link";
+import { Product } from "@/lib/types";
+import { useCart } from "@/hooks/useCart";
+import Rating from "@/components/ui/Rating";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface ProductCardProps {
   product: Product;
@@ -34,22 +34,26 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-gray-400">Product Image</span>
         </div>
       </Link>
-      
+
       <div className="p-4">
         <Link href={`/products/${product.id}`}>
-          <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600">{product.name}</h3>
+          <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600">
+            {product.name}
+          </h3>
         </Link>
-        
+
         <div className="mt-1 flex items-center">
           <Rating value={product.rating || 0} />
           <span className="ml-1 text-sm text-gray-500">
             ({product.reviewCount || 0} reviews)
           </span>
         </div>
-        
+
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-gray-900 font-bold">${product.price.toFixed(2)}</span>
-          
+          <span className="text-gray-900 font-bold">
+            ${product.price.toFixed(2)}
+          </span>
+
           <button
             onClick={handleAddToCart}
             disabled={isAddingToCart}
@@ -58,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {isAddingToCart ? (
               <LoadingSpinner size="xs" color="white" />
             ) : (
-              'Add to Cart'
+              "Add to Cart"
             )}
           </button>
         </div>

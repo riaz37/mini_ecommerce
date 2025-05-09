@@ -1,5 +1,4 @@
-
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 export interface OrderItem {
   id: string;
@@ -16,7 +15,7 @@ export interface Order {
   subtotal: number;
   tax: number;
   total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
   updatedAt: string;
   shippingAddress: {
@@ -30,13 +29,13 @@ export interface Order {
     phone: string;
   };
   paymentMethod: {
-    type: 'credit_card' | 'paypal';
+    type: "credit_card" | "paypal";
     details: any;
   };
 }
 
 export async function getOrders() {
-  return await apiClient('/orders', { requireAuth: true });
+  return await apiClient("/orders", { requireAuth: true });
 }
 
 export async function getOrderById(id: string) {
@@ -48,8 +47,8 @@ export async function createOrder(data: {
   shippingAddress: any;
   paymentMethod: any;
 }) {
-  return await apiClient('/orders', {
-    method: 'POST',
+  return await apiClient("/orders", {
+    method: "POST",
     body: data,
     requireAuth: true,
   });
@@ -57,8 +56,7 @@ export async function createOrder(data: {
 
 export async function cancelOrder(id: string) {
   return await apiClient(`/orders/${id}/cancel`, {
-    method: 'POST',
+    method: "POST",
     requireAuth: true,
   });
 }
-

@@ -10,6 +10,8 @@ import {
   UseGuards,
   Request,
   Res,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -26,6 +28,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
+import { Request as ExpressRequest } from 'express';
 
 @ApiTags('orders')
 @Controller()
@@ -53,39 +56,40 @@ export class OrdersController {
 
   @ApiOperation({ summary: 'Get cart contents' })
   @ApiResponse({ status: 200, description: 'Return cart contents' })
-  @ApiQuery({
-    name: 'sessionId',
-    required: false,
-    description: 'Cart session ID (optional if cookie exists)',
-  })
   @Get('cart')
-  async getCart(@Query('sessionId') sessionId: string, @Request() req) {
-    // Use sessionId from query param or from cookie
-    const cartSessionId = sessionId || req.cookies?.cart_session_id;
+  async getCart(@Req() request: Request) {
+    // Always get sessionId from cookies
+    const sessionId = (request as unknown as ExpressRequest).cookies[
+      'cart_session_id'
+    ];
 
-    if (!cartSessionId) {
-      return { items: [], total: 0 };
+    if (!sessionId) {
+      throw new BadRequestException('No cart session found');
     }
 
-    return this.ordersService.getCart(cartSessionId);
+    return this.ordersService.getCart(sessionId);
   }
 
   @ApiOperation({ summary: 'Add a product to cart' })
   @ApiResponse({ status: 200, description: 'Product added to cart' })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  @Post('cart')
-  async addToCart(@Body() addToCartDto: AddToCartDto, @Request() req) {
-    // Use sessionId from body or from cookie
-    const sessionId = addToCartDto.sessionId || req.cookies?.cart_session_id;
+  @Post('cart/add')
+  async addToCart(@Body() addToCartDto: AddToCartDto, @Req() request: Request) {
+    // Get sessionId from cookies, not from DTO
+    const sessionId = (request as unknown as ExpressRequest).cookies[
+      'cart_session_id'
+    ];
 
     if (!sessionId) {
-      throw new Error('No cart session found');
+      throw new BadRequestException('No cart session found');
     }
 
-    return this.ordersService.addToCart({
-      ...addToCartDto,
+    // Use sessionId from cookies
+    return this.ordersService.addToCart(
       sessionId,
-    });
+      addToCartDto.productId,
+      addToCartDto.quantity,
+    );
   }
 
   @ApiOperation({ summary: 'Update cart item quantity' })
@@ -96,9 +100,18 @@ export class OrdersController {
   async updateCartItem(
     @Param('productId') productId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
+    @Req() request: Request,
   ) {
+    const sessionId = (request as unknown as ExpressRequest).cookies[
+      'cart_session_id'
+    ];
+
+    if (!sessionId) {
+      throw new BadRequestException('No cart session found');
+    }
+
     return this.ordersService.updateCartItem(
-      updateCartItemDto.sessionId,
+      sessionId,
       productId,
       updateCartItemDto.quantity,
     );
@@ -108,28 +121,34 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Item removed from cart' })
   @ApiResponse({ status: 404, description: 'Item not found in cart' })
   @ApiParam({ name: 'productId', description: 'Product ID to remove' })
-  @ApiQuery({
-    name: 'sessionId',
-    required: true,
-    description: 'Cart session ID',
-  })
   @Delete('cart/items/:productId')
   async removeCartItem(
     @Param('productId') productId: string,
-    @Query('sessionId') sessionId: string,
+    @Req() request: Request,
   ) {
+    const sessionId = (request as unknown as ExpressRequest).cookies[
+      'cart_session_id'
+    ];
+
+    if (!sessionId) {
+      throw new BadRequestException('No cart session found');
+    }
+
     return this.ordersService.removeCartItem(sessionId, productId);
   }
 
   @ApiOperation({ summary: 'Clear cart' })
   @ApiResponse({ status: 200, description: 'Cart cleared' })
-  @ApiQuery({
-    name: 'sessionId',
-    required: true,
-    description: 'Cart session ID',
-  })
   @Delete('cart')
-  async clearCart(@Query('sessionId') sessionId: string) {
+  async clearCart(@Req() request: Request) {
+    const sessionId = (request as unknown as ExpressRequest).cookies[
+      'cart_session_id'
+    ];
+
+    if (!sessionId) {
+      throw new BadRequestException('No cart session found');
+    }
+
     return this.ordersService.clearCart(sessionId);
   }
 
@@ -140,10 +159,7 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   @Post('cart/merge')
   async mergeCart(@Body() mergeCartDto: { sessionId: string }, @Request() req) {
-    return this.ordersService.checkout({
-      sessionId: mergeCartDto.sessionId,
-      customerId: req.user.id
-    });
+    return this.ordersService.mergeCart(mergeCartDto.sessionId, req.user.id);
   }
 
   @ApiOperation({ summary: 'Checkout and create an order' })

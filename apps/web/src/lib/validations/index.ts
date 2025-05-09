@@ -1,21 +1,29 @@
-import * as z from "zod"
+import * as z from "zod";
 
 // Auth validations
 export const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-})
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters" }),
+});
 
-export const registerSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-  confirmPassword: z.string().min(8, { message: "Please confirm your password" }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-})
+export const registerSchema = z
+  .object({
+    firstName: z.string().min(1, { message: "First name is required" }),
+    lastName: z.string().min(1, { message: "Last name is required" }),
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" }),
+    confirmPassword: z
+      .string()
+      .min(8, { message: "Please confirm your password" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 // Customer validations
 export const customerSchema = z.object({
@@ -23,7 +31,7 @@ export const customerSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   address: z.string().optional(),
   phone: z.string().optional(),
-})
+});
 
 // Checkout validations
 export const checkoutSchema = z.object({
@@ -42,7 +50,7 @@ export const checkoutSchema = z.object({
       required_error: "Please select a payment method",
     }),
   }),
-})
+});
 
 // Product validations
 export const productFilterSchema = z.object({
@@ -50,4 +58,4 @@ export const productFilterSchema = z.object({
   minPrice: z.number().optional(),
   maxPrice: z.number().optional(),
   search: z.string().optional(),
-})
+});

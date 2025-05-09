@@ -133,7 +133,10 @@ export class ProductsController {
   }
 
   @ApiOperation({ summary: 'Get all ratings for a product' })
-  @ApiResponse({ status: 200, description: 'Return all ratings for the product' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all ratings for the product',
+  })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @ApiParam({ name: 'id', description: 'Product ID' })
   @Get(':id/ratings')

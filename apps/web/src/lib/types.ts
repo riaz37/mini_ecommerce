@@ -1,4 +1,3 @@
-
 // Product types
 export interface Product {
   id: string;
@@ -24,7 +23,7 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
 }
@@ -44,17 +43,14 @@ export interface Category {
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: 'customer' | 'admin';
-  createdAt: string;
-  updatedAt: string;
+  role: "USER" | "ADMIN";
+  customerId?: string; // Optional because not all users are customers
 }
 
 // Cart types
 export interface CartItem {
-  id: string;
   productId: string;
+  id: string; // Same as productId for compatibility
   name: string;
   price: number;
   quantity: number;
@@ -90,7 +86,7 @@ export interface ShippingAddress {
 }
 
 export interface PaymentMethod {
-  type: 'credit_card' | 'paypal';
+  type: "credit_card" | "paypal";
   details: any;
 }
 
@@ -101,7 +97,7 @@ export interface Order {
   subtotal: number;
   tax: number;
   total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
   updatedAt: string;
   shippingAddress: ShippingAddress;
@@ -118,4 +114,3 @@ export interface Review {
   comment?: string;
   createdAt: string;
 }
-

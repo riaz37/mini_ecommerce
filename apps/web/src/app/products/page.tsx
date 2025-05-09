@@ -1,13 +1,12 @@
+"use client";
 
-'use client';
-
-import React, { useState } from 'react';
-import ProductList from '@/components/product/ProductList';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import React, { useState } from "react";
+import ProductList from "@/components/product/ProductList";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function ProductsPage() {
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('featured');
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("featured");
   const [isFiltering, setIsFiltering] = useState(false);
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -27,10 +26,13 @@ export default function ProductsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Products</h1>
-      
+
       <div className="flex flex-col sm:flex-row justify-between mb-8">
         <div className="mb-4 sm:mb-0">
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="category"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Category
           </label>
           <select
@@ -46,9 +48,12 @@ export default function ProductsPage() {
             <option value="home">Home & Kitchen</option>
           </select>
         </div>
-        
+
         <div>
-          <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="sort"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Sort By
           </label>
           <select
@@ -65,11 +70,15 @@ export default function ProductsPage() {
           </select>
         </div>
       </div>
-      
+
       <div className="relative">
         {isFiltering && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center">
-            <LoadingSpinner size="lg" color="primary" text="Updating results..." />
+            <LoadingSpinner
+              size="lg"
+              color="primary"
+              text="Updating results..."
+            />
           </div>
         )}
         <ProductList />
@@ -77,4 +86,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-

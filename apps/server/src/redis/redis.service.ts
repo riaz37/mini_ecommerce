@@ -4,7 +4,7 @@ import { createClient } from 'redis';
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client;
-  
+
   // Default TTL for cart data (24 hours)
   private readonly DEFAULT_CART_TTL = 60 * 60 * 24;
 
@@ -47,7 +47,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.get(`cart:${sessionId}`);
   }
 
-  async setCart(sessionId: string, cart: any, ttl: number = this.DEFAULT_CART_TTL) {
+  async setCart(
+    sessionId: string,
+    cart: any,
+    ttl: number = this.DEFAULT_CART_TTL,
+  ) {
     return this.set(`cart:${sessionId}`, cart, ttl);
   }
 

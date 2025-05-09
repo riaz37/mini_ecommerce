@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -58,7 +62,9 @@ export class ProductsService {
     });
 
     if (!category) {
-      throw new NotFoundException(`Category with ID ${createProductDto.categoryId} not found`);
+      throw new NotFoundException(
+        `Category with ID ${createProductDto.categoryId} not found`,
+      );
     }
 
     // Create the product if category exists
@@ -138,7 +144,7 @@ export class ProductsService {
         select: { value: true },
       });
 
-      const averageRating = 
+      const averageRating =
         ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length;
 
       await this.prisma.product.update({
