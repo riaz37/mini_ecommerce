@@ -33,15 +33,6 @@ export class CreateProductDto {
   stock: number;
 
   @ApiProperty({
-    example: 4.5,
-    description: 'Product rating (0-5)',
-    required: false,
-  })
-  @IsNumber()
-  @IsOptional()
-  rating?: number;
-
-  @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'Category ID',
   })

@@ -12,8 +12,8 @@ export class OrdersService {
   ) {}
 
   async getCart(sessionId: string) {
-    const cartKey = `cart:${sessionId}`;
-    const cart = await this.redisService.get(cartKey);
+    // Get cart from Redis
+    const cart = await this.redisService.getCart(sessionId);
     
     if (!cart) {
       return { items: [], total: 0 };
@@ -24,6 +24,9 @@ export class OrdersService {
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
+    
+    // Refresh TTL on cart access
+    await this.redisService.expire(`cart:${sessionId}`, 60 * 60 * 24);
     
     return { ...cart, total };
   }
@@ -41,8 +44,7 @@ export class OrdersService {
     }
 
     // Get current cart or create new one
-    const cartKey = `cart:${sessionId}`;
-    const cart = (await this.redisService.get(cartKey)) || { items: [] };
+    const cart = await this.redisService.getCart(sessionId) || { items: [] };
 
     // Add or update item in cart
     const existingItemIndex = cart.items.findIndex(
@@ -66,8 +68,8 @@ export class OrdersService {
       0,
     );
 
-    // Save cart to Redis with 24 hour expiry
-    await this.redisService.set(cartKey, cart, 60 * 60 * 24);
+    // Save cart to Redis with TTL
+    await this.redisService.setCart(sessionId, cart);
 
     return { ...cart, total };
   }
@@ -143,6 +145,17 @@ export class OrdersService {
 
     if (!cart || !cart.items || cart.items.length === 0) {
       throw new NotFoundException('Cart is empty');
+    }
+
+    // Check if customer exists
+    if (customerId) {
+      const customer = await this.prisma.customer.findUnique({
+        where: { id: customerId },
+      });
+
+      if (!customer) {
+        throw new NotFoundException(`Customer with ID ${customerId} not found`);
+      }
     }
 
     // Calculate total

@@ -21,21 +21,12 @@ export async function apiClient(
       'Content-Type': 'application/json',
       ...headers,
     },
-    credentials: 'include', // Include cookies for auth
+    credentials: 'include', // Include cookies for auth and session
   };
 
   if (requireAuth) {
-    // Get token from localStorage or cookie
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
-    options.headers = {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    };
+    // Get token from cookie (handled by credentials: 'include')
+    // No need to manually set Authorization header as the cookie will be sent
   }
 
   if (body) {
@@ -47,10 +38,9 @@ export async function apiClient(
   // Handle HTTP errors
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const error = new Error(
-      errorData.message || `API error: ${response.status} ${response.statusText}`
-    );
-    throw Object.assign(error, { status: response.status, data: errorData });
+    const errorMessage = errorData.message || response.statusText;
+    const error = new Error(errorMessage);
+    throw error;
   }
   
   // Check if response is empty
@@ -59,5 +49,5 @@ export async function apiClient(
     return await response.json();
   }
   
-  return await response.text();
+  return {};
 }

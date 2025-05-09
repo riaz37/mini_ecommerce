@@ -52,6 +52,16 @@ export class ProductsService {
   }
 
   async create(createProductDto: CreateProductDto) {
+    // Check if the category exists
+    const category = await this.prisma.category.findUnique({
+      where: { id: createProductDto.categoryId },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${createProductDto.categoryId} not found`);
+    }
+
+    // Create the product if category exists
     return this.prisma.product.create({
       data: createProductDto,
       include: { category: true },

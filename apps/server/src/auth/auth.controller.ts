@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards, Get, Request, Headers } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Get, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -59,18 +59,5 @@ export class AuthController {
     // Since we're using JWT tokens, we don't need to do anything server-side
     // The client will remove the token
     return { message: 'Logout successful' };
-  }
-
-  @ApiOperation({ summary: 'Validate token and get user info' })
-  @ApiResponse({ status: 200, description: 'Token is valid' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @Post('validate-token')
-  async validateToken(@Headers('authorization') authHeader: string) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Invalid token');
-    }
-    
-    const token = authHeader.substring(7);
-    return this.authService.getUserFromToken(token);
   }
 }

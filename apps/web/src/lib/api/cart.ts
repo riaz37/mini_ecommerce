@@ -12,6 +12,13 @@ export interface Cart {
   total: number;
 }
 
+// Create a new cart session
+export async function createCartSession(): Promise<{ sessionId: string }> {
+  return await apiClient('/cart/session', {
+    method: 'POST',
+  });
+}
+
 export async function getCart(sessionId: string): Promise<Cart> {
   return await apiClient(`/cart?sessionId=${sessionId}`);
 }

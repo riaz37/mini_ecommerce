@@ -36,6 +36,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
     const name = `${firstName} ${lastName}`;
     
+    // Create user
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -43,6 +44,21 @@ export class AuthService {
         name,
       },
     });
+
+    // Check if customer with this email already exists
+    const existingCustomer = await this.prisma.customer.findUnique({
+      where: { email },
+    });
+
+    // Create customer record if it doesn't exist
+    if (!existingCustomer) {
+      await this.prisma.customer.create({
+        data: {
+          email,
+          name,
+        },
+      });
+    }
 
     const { password: _, ...result } = user;
     return result;

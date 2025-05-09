@@ -2,48 +2,57 @@
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { v4 as uuidv4 } from "uuid";
 import { Product } from "@/lib/types";
 import { 
   addItem as addToCartAction,
   removeItem as removeItemAction,
   updateQuantity as updateQuantityAction,
   clearCart as clearCartAction,
-  hydrateCart
+  hydrateCart,
+  setSessionId
 } from "@/store/cartSlice";
 import { 
   getCart,
   addToCart,
   updateCartItem,
   removeCartItem,
-  clearCart as clearCartApi
+  clearCart as clearCartApi,
+  createCartSession
 } from "@/lib/api/cart";
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/store/store";
-
-// Generate a session ID for guest users
-const getSessionId = () => {
-  if (typeof window === "undefined") return "";
-
-  let sessionId = localStorage.getItem("cart_session_id");
-  if (!sessionId) {
-    sessionId = uuidv4();
-    localStorage.setItem("cart_session_id", sessionId);
-  }
-  return sessionId;
-};
 
 export function useCart() {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const cartTotal = useSelector((state: RootState) => state.cart.total);
+  const sessionId = useSelector((state: RootState) => state.cart.sessionId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const sessionId = getSessionId();
 
-  // Fetch cart from server on initial load
+  // Initialize session ID if needed
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (!sessionId) {
+        setIsLoading(true);
+        try {
+          // Create a new session on the server
+          const response = await createCartSession();
+          dispatch(setSessionId(response.sessionId));
+        } catch (err) {
+          console.error("Failed to create cart session:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeSession();
+  }, [sessionId, dispatch]);
+
+  // Fetch cart from Redis on initial load and when session ID changes
   useEffect(() => {
     const fetchCart = async () => {
       if (!sessionId) return;
@@ -52,7 +61,7 @@ export function useCart() {
       try {
         const serverCart = await getCart(sessionId);
         
-        // Update Redux store with server cart
+        // Update Redux store with server cart from Redis
         dispatch(hydrateCart({
           sessionId,
           items: serverCart.items.map(item => ({
@@ -65,7 +74,7 @@ export function useCart() {
           total: serverCart.total
         }));
       } catch (err) {
-        console.error("Failed to fetch cart:", err);
+        console.error("Failed to fetch cart from Redis:", err);
       } finally {
         setIsLoading(false);
       }
@@ -74,21 +83,65 @@ export function useCart() {
     fetchCart();
   }, [dispatch, sessionId, user?.id]);
 
+  // When user logs in, we might want to merge their guest cart with their user cart
+  useEffect(() => {
+    const mergeCartsAfterLogin = async () => {
+      if (user?.id && sessionId) {
+        try {
+          setIsLoading(true);
+          // Call API to merge carts in Redis
+          await apiClient('/cart/merge', {
+            method: 'POST',
+            body: { sessionId },
+            requireAuth: true,
+          });
+          
+          // Fetch the merged cart
+          const mergedCart = await getCart(sessionId);
+          
+          // Update Redux with the merged cart from Redis
+          dispatch(hydrateCart({
+            sessionId,
+            items: mergedCart.items.map(item => ({
+              id: item.productId,
+              productId: item.productId,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity
+            })),
+            total: mergedCart.total
+          }));
+        } catch (err) {
+          console.error("Failed to merge carts:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    mergeCartsAfterLogin();
+  }, [user?.id, sessionId, dispatch]);
+
   const addItem = async (product: Product, quantity: number) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Add to server-side cart
-      await addToCart(sessionId, product.id, quantity);
+      // Add to Redis cart
+      const updatedCart = await addToCart(sessionId, product.id, quantity);
 
-      // Update local Redux store
-      dispatch(
-        addToCartAction({
-          product,
-          quantity,
-        })
-      );
+      // Update Redux store with the response from Redis
+      dispatch(hydrateCart({
+        sessionId,
+        items: updatedCart.items.map(item => ({
+          id: item.productId,
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        total: updatedCart.total
+      }));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to add item to cart")
@@ -104,11 +157,21 @@ export function useCart() {
     setError(null);
 
     try {
-      // Remove from server-side cart
-      await removeCartItem(sessionId, productId);
+      // Remove from Redis cart
+      const updatedCart = await removeCartItem(sessionId, productId);
 
-      // Update local Redux store
-      dispatch(removeItemAction(productId));
+      // Update Redux store with the response from Redis
+      dispatch(hydrateCart({
+        sessionId,
+        items: updatedCart.items.map(item => ({
+          id: item.productId,
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        total: updatedCart.total
+      }));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to remove item from cart")
@@ -124,11 +187,21 @@ export function useCart() {
     setError(null);
 
     try {
-      // Update server-side cart
-      await updateCartItem(sessionId, productId, quantity);
+      // Update Redis cart
+      const updatedCart = await updateCartItem(sessionId, productId, quantity);
 
-      // Update local Redux store
-      dispatch(updateQuantityAction({ productId, quantity }));
+      // Update Redux store with the response from Redis
+      dispatch(hydrateCart({
+        sessionId,
+        items: updatedCart.items.map(item => ({
+          id: item.productId,
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        total: updatedCart.total
+      }));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to update cart item")
@@ -144,10 +217,10 @@ export function useCart() {
     setError(null);
 
     try {
-      // Clear server-side cart
+      // Clear Redis cart
       await clearCartApi(sessionId);
 
-      // Update local Redux store
+      // Update Redux store
       dispatch(clearCartAction());
     } catch (err) {
       setError(
@@ -159,22 +232,26 @@ export function useCart() {
     }
   };
 
-  const checkout = async (customerId: string) => {
+  const checkout = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // For guest checkout, we just need sessionId
+      // For logged-in users, we'll use their user ID
+      const checkoutData = {
+        sessionId,
+        ...(user?.id && { customerId: user.id }),
+      };
+
       const order = await apiClient("/checkout", {
         method: "POST",
-        body: {
-          sessionId,
-          customerId,
-        },
-        requireAuth: true,
+        body: checkoutData,
+        requireAuth: !!user?.id, // Require auth only for logged-in users
       });
 
       // Clear cart after successful checkout
-      dispatch(clearCartAction());
+      await clearCart();
 
       return order;
     } catch (err) {

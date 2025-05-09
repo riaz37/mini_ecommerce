@@ -1,4 +1,17 @@
-import { Body, Controller, Post, Get, Put, Delete, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  Res,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OrdersService } from './orders.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
@@ -12,26 +25,67 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { v4 as uuidv4 } from 'uuid';
 
 @ApiTags('orders')
 @Controller()
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @ApiOperation({ summary: 'Create a new cart session' })
+  @ApiResponse({ status: 201, description: 'New cart session created' })
+  @Post('cart/session')
+  async createCartSession(@Res({ passthrough: true }) response: Response) {
+    const sessionId = uuidv4();
+
+    // Set session ID in HTTP-only cookie
+    response.cookie('cart_session_id', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/',
+      sameSite: 'strict',
+    });
+
+    // Also return it in the response for the initial Redux state
+    return { sessionId };
+  }
+
   @ApiOperation({ summary: 'Get cart contents' })
   @ApiResponse({ status: 200, description: 'Return cart contents' })
-  @ApiQuery({ name: 'sessionId', required: true, description: 'Cart session ID' })
+  @ApiQuery({
+    name: 'sessionId',
+    required: false,
+    description: 'Cart session ID (optional if cookie exists)',
+  })
   @Get('cart')
-  async getCart(@Query('sessionId') sessionId: string) {
-    return this.ordersService.getCart(sessionId);
+  async getCart(@Query('sessionId') sessionId: string, @Request() req) {
+    // Use sessionId from query param or from cookie
+    const cartSessionId = sessionId || req.cookies?.cart_session_id;
+
+    if (!cartSessionId) {
+      return { items: [], total: 0 };
+    }
+
+    return this.ordersService.getCart(cartSessionId);
   }
 
   @ApiOperation({ summary: 'Add a product to cart' })
   @ApiResponse({ status: 200, description: 'Product added to cart' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @Post('cart')
-  async addToCart(@Body() addToCartDto: AddToCartDto) {
-    return this.ordersService.addToCart(addToCartDto);
+  async addToCart(@Body() addToCartDto: AddToCartDto, @Request() req) {
+    // Use sessionId from body or from cookie
+    const sessionId = addToCartDto.sessionId || req.cookies?.cart_session_id;
+
+    if (!sessionId) {
+      throw new Error('No cart session found');
+    }
+
+    return this.ordersService.addToCart({
+      ...addToCartDto,
+      sessionId,
+    });
   }
 
   @ApiOperation({ summary: 'Update cart item quantity' })
@@ -54,7 +108,11 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Item removed from cart' })
   @ApiResponse({ status: 404, description: 'Item not found in cart' })
   @ApiParam({ name: 'productId', description: 'Product ID to remove' })
-  @ApiQuery({ name: 'sessionId', required: true, description: 'Cart session ID' })
+  @ApiQuery({
+    name: 'sessionId',
+    required: true,
+    description: 'Cart session ID',
+  })
   @Delete('cart/items/:productId')
   async removeCartItem(
     @Param('productId') productId: string,
@@ -65,7 +123,11 @@ export class OrdersController {
 
   @ApiOperation({ summary: 'Clear cart' })
   @ApiResponse({ status: 200, description: 'Cart cleared' })
-  @ApiQuery({ name: 'sessionId', required: true, description: 'Cart session ID' })
+  @ApiQuery({
+    name: 'sessionId',
+    required: true,
+    description: 'Cart session ID',
+  })
   @Delete('cart')
   async clearCart(@Query('sessionId') sessionId: string) {
     return this.ordersService.clearCart(sessionId);
@@ -77,11 +139,11 @@ export class OrdersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('cart/merge')
-  async mergeCart(
-    @Body() mergeCartDto: { sessionId: string },
-    @Request() req,
-  ) {
-    return this.ordersService.mergeCart(mergeCartDto.sessionId, req.user.userId);
+  async mergeCart(@Body() mergeCartDto: { sessionId: string }, @Request() req) {
+    return this.ordersService.checkout({
+      sessionId: mergeCartDto.sessionId,
+      customerId: req.user.id
+    });
   }
 
   @ApiOperation({ summary: 'Checkout and create an order' })
