@@ -1,0 +1,121 @@
+
+// Product types
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  categoryId: string;
+  inStock: boolean;
+  quantity?: number;
+  rating?: number;
+  reviewCount?: number;
+  features?: string[];
+  specifications?: Record<string, string>;
+  relatedProducts?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductFilters {
+  categoryId?: string;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+// Category types
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  parentId?: string;
+  children?: Category[];
+  productCount?: number;
+}
+
+// User types
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'customer' | 'admin';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Cart types
+export interface CartItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
+export interface Cart {
+  id: string;
+  items: CartItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+
+// Order types
+export interface OrderItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface ShippingAddress {
+  fullName: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+}
+
+export interface PaymentMethod {
+  type: 'credit_card' | 'paypal';
+  details: any;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  items: OrderItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  shippingAddress: ShippingAddress;
+  paymentMethod: PaymentMethod;
+}
+
+// Review types
+export interface Review {
+  id: string;
+  productId: string;
+  customerId: string;
+  customerName: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+

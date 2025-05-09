@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -32,8 +32,10 @@ export class AuthService {
     };
   }
 
-  async register(email: string, password: string, name?: string) {
+  async register(email: string, password: string, firstName: string, lastName: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
+    const name = `${firstName} ${lastName}`;
+    
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -44,5 +46,23 @@ export class AuthService {
 
     const { password: _, ...result } = user;
     return result;
+  }
+
+  async getUserFromToken(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      const { password, ...result } = user;
+      return result;
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 }

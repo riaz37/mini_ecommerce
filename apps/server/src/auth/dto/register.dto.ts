@@ -26,11 +26,18 @@ export class RegisterDto {
   password: string;
 
   @ApiProperty({
-    example: 'John Doe',
-    description: 'User full name',
-    required: false,
+    example: 'John',
+    description: 'User first name',
   })
   @IsString()
-  @IsOptional()
-  name?: string;
+  @IsNotEmpty()
+  firstName: string;
+
+  @ApiProperty({
+    example: 'Doe',
+    description: 'User last name',
+  })
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
 }

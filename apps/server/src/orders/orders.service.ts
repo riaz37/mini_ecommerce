@@ -11,6 +11,23 @@ export class OrdersService {
     private redisService: RedisService,
   ) {}
 
+  async getCart(sessionId: string) {
+    const cartKey = `cart:${sessionId}`;
+    const cart = await this.redisService.get(cartKey);
+    
+    if (!cart) {
+      return { items: [], total: 0 };
+    }
+    
+    // Calculate total
+    const total = cart.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    
+    return { ...cart, total };
+  }
+
   async addToCart(addToCartDto: AddToCartDto) {
     const { sessionId, productId, quantity } = addToCartDto;
 
@@ -43,10 +60,78 @@ export class OrdersService {
       });
     }
 
+    // Calculate total
+    const total = cart.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
     // Save cart to Redis with 24 hour expiry
     await this.redisService.set(cartKey, cart, 60 * 60 * 24);
 
-    return cart;
+    return { ...cart, total };
+  }
+
+  async updateCartItem(sessionId: string, productId: string, quantity: number) {
+    const cartKey = `cart:${sessionId}`;
+    const cart = await this.redisService.get(cartKey);
+
+    if (!cart || !cart.items || cart.items.length === 0) {
+      throw new NotFoundException('Cart is empty');
+    }
+
+    const itemIndex = cart.items.findIndex(item => item.productId === productId);
+    
+    if (itemIndex === -1) {
+      throw new NotFoundException('Item not found in cart');
+    }
+
+    // Update quantity
+    cart.items[itemIndex].quantity = quantity;
+
+    // Calculate total
+    const total = cart.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    // Save updated cart to Redis
+    await this.redisService.set(cartKey, cart, 60 * 60 * 24);
+
+    return { ...cart, total };
+  }
+
+  async removeCartItem(sessionId: string, productId: string) {
+    const cartKey = `cart:${sessionId}`;
+    const cart = await this.redisService.get(cartKey);
+
+    if (!cart || !cart.items || cart.items.length === 0) {
+      throw new NotFoundException('Cart is empty');
+    }
+
+    const initialLength = cart.items.length;
+    cart.items = cart.items.filter(item => item.productId !== productId);
+
+    if (cart.items.length === initialLength) {
+      throw new NotFoundException('Item not found in cart');
+    }
+
+    // Calculate total
+    const total = cart.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    // Save updated cart to Redis
+    await this.redisService.set(cartKey, cart, 60 * 60 * 24);
+
+    return { ...cart, total };
+  }
+
+  async clearCart(sessionId: string) {
+    const cartKey = `cart:${sessionId}`;
+    await this.redisService.del(cartKey);
+    return { items: [], total: 0 };
   }
 
   async checkout(checkoutDto: CheckoutDto) {
