@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useCart } from "@/hooks/useCart";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -9,15 +9,20 @@ export default function CartSummary() {
   const { cart, isLoading, clearCart } = useCart();
   const [isClearing, setIsClearing] = React.useState(false);
 
-  // Use values from the cart
-  const subtotal = cart.subtotal || cart.total;
-  const tax = cart.tax || subtotal * 0.08;
+  // Use useMemo to calculate values only when cart changes
+  const { subtotal, shipping, tax, total } = useMemo(() => {
+    // Use values from the cart
+    const subtotal = cart.subtotal || cart.total;
+    const tax = cart.tax || subtotal * 0.08;
 
-  // Calculate shipping (free over $50)
-  const shipping = subtotal > 50 ? 0 : 5.99;
+    // Calculate shipping (free over $50)
+    const shipping = subtotal > 50 ? 0 : 5.99;
 
-  // Calculate total
-  const total = cart.total || subtotal + shipping + tax;
+    // Calculate total
+    const total = cart.total || subtotal + shipping + tax;
+
+    return { subtotal, shipping, tax, total };
+  }, [cart.subtotal, cart.total, cart.tax]);
 
   const handleClearCart = async () => {
     setIsClearing(true);

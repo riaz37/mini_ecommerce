@@ -19,8 +19,13 @@ export async function createCartSession(): Promise<{ sessionId: string }> {
   });
 }
 
-export async function getCart(sessionId: string): Promise<Cart> {
-  return await apiClient(`/cart?sessionId=${sessionId}`);
+export async function getCart(sessionId?: string): Promise<Cart> {
+  const isLoggedIn = !!localStorage.getItem("auth_token") || 
+    document.cookie.includes("auth_token=");
+  
+  return await apiClient(`/cart`, {
+    requireAuth: isLoggedIn
+  });
 }
 
 export async function addToCart(

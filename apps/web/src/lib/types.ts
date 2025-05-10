@@ -42,6 +42,8 @@ export interface Category {
 // User types
 export interface User {
   id: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: "USER" | "ADMIN";
   customerId?: string; // Optional because not all users are customers

@@ -71,22 +71,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient("auth/login", {
+      const response = await apiClient("/auth/login", {
         method: "POST",
         body: credentials,
       });
-
-      // No need to store token in localStorage - it's in HTTP-only cookies
-      setUser({
-        id: response.user.id,
-        email: response.user.email,
-        name: response.user.name,
-        role: response.user.role,
-        customerId: response.user.customerId,
+      
+      if (!response.access_token) {
+        console.error("No access_token received from server");
+        throw new Error("Authentication failed: No token received");
+      }
+      
+      // Store the token in a cookie with proper attributes
+      document.cookie = `auth_token=${response.access_token}; path=/; max-age=86400; SameSite=Strict`;
+      localStorage.setItem('auth_token', response.access_token);
+      
+      // Set user in state
+      setUser(response.user);
+      
+      // Force cart refresh after login
+      await apiClient("/cart/merge", {
+        method: "POST",
+        requireAuth: true,
       });
-    } catch (err) {
-      setError("Invalid email or password");
-      throw err;
+      
+      return response;
+    } catch (error) {
+      console.error("Login failed:", error);
+      setError("Invalid email or password. Please try again.");
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      // No need to store token in localStorage - it's in HTTP-only cookies
+      // Store the token in cookies and localStorage
+      if (loginResponse.access_token) {
+        document.cookie = `auth_token=${loginResponse.access_token}; path=/; max-age=86400; SameSite=Strict`;
+        localStorage.setItem('auth_token', loginResponse.access_token);
+      }
+
       setUser({
         id: loginResponse.user.id,
         email: loginResponse.user.email,

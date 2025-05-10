@@ -53,18 +53,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-gray-900 font-bold">
             ${typeof product.price === 'number' 
               ? product.price.toFixed(2) 
-              : parseFloat(product.price).toFixed(2)}
+              : parseFloat(product.price as any).toFixed(2)}
           </span>
 
           <button
             onClick={handleAddToCart}
-            disabled={isAddingToCart}
+            disabled={isAddingToCart || !product.inStock}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-md disabled:bg-blue-400 flex items-center justify-center min-w-[80px]"
           >
             {isAddingToCart ? (
               <LoadingSpinner size="xs" color="white" />
             ) : (
-              "Add to Cart"
+              product.inStock ? "Add to Cart" : "Out of Stock"
             )}
           </button>
         </div>

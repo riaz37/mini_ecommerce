@@ -24,7 +24,7 @@ export default function ProductDetail() {
     async function fetchProductData() {
       setLoading(true);
       try {
-        // Fetch product details
+        // Fetch product details - normalization happens in apiClient
         const productData = await getProductById(id as string);
         setProduct(productData);
 
@@ -124,7 +124,9 @@ export default function ProductDetail() {
             </div>
 
             <p className="text-3xl font-bold text-gray-900 mb-6">
-              ${product.price.toFixed(2)}
+              ${typeof product.price === 'number' 
+                ? product.price.toFixed(2) 
+                : parseFloat(product.price as any).toFixed(2)}
             </p>
 
             <div className="mb-8">

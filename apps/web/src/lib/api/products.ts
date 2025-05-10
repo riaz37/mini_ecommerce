@@ -40,11 +40,24 @@ export async function getProducts(filters: ProductFilters = {}) {
   const queryString = queryParams.toString();
   const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
 
-  return await apiClient(endpoint);
+  const products = await apiClient(endpoint);
+  
+  // Add inStock property to each product based on stock value
+  return products.map(product => ({
+    ...product,
+    inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0)
+  }));
 }
 
 export async function getProductById(id: string): Promise<Product> {
-  return await apiClient(`/products/${id}`);
+  const product = await apiClient(`/products/${id}`);
+  
+  // Add inStock property based on stock value if it doesn't exist
+  if (product.inStock === undefined && product.stock !== undefined) {
+    product.inStock = product.stock > 0;
+  }
+  
+  return product;
 }
 
 export async function getProductRatings(productId: string) {
@@ -63,13 +76,13 @@ export async function rateProduct(
 }
 
 export async function getFeaturedProducts() {
-  return await apiClient("/products/featured");
+  return await apiClient("/products?featured=true");
 }
 
 export async function getNewArrivals() {
-  return await apiClient("/products/new-arrivals");
+  return await apiClient("/products?sort=createdAt&order=desc&limit=8");
 }
 
 export async function getBestSellers() {
-  return await apiClient("/products/best-sellers");
+  return await apiClient("/products?sort=sales&order=desc&limit=8");
 }

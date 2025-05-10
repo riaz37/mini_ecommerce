@@ -55,27 +55,25 @@ export function useCart() {
   // Fetch cart from Redis on initial load and when session ID changes
   useEffect(() => {
     const fetchCart = async () => {
-      if (!sessionId) return;
-
       setIsLoading(true);
       try {
-        const serverCart = await getCart(sessionId);
-
+        // Don't depend on sessionId for fetching when user is logged in
+        const serverCart = await getCart();
+        
         // Update Redux store with server cart from Redis
         dispatch(
           hydrateCart({
             sessionId,
             items: serverCart.items.map((item) => ({
-              id: item.productId, // Keep this for backward compatibility
+              id: item.productId,
               productId: item.productId,
               name: item.name,
               price: item.price,
               quantity: item.quantity,
-              // Add image if available
               ...(item.image && { image: item.image }),
             })),
             total: serverCart.total,
-          }),
+          })
         );
       } catch (err) {
         console.error("Failed to fetch cart from Redis:", err);
@@ -85,14 +83,46 @@ export function useCart() {
     };
 
     fetchCart();
+    // Add a small delay to ensure auth state is fully updated
+    const refreshTimeout = setTimeout(() => {
+      if (user?.id) fetchCart();
+    }, 500);
+    
+    return () => clearTimeout(refreshTimeout);
   }, [dispatch, sessionId, user?.id]);
 
   // When user logs in, we might want to merge their guest cart with their user cart
   useEffect(() => {
     const mergeCartsAfterLogin = async () => {
+      // Only attempt to merge carts if user is logged in and we have a session ID
       if (user?.id && sessionId) {
         try {
           setIsLoading(true);
+
+          // Get auth token
+          const authToken = localStorage.getItem("auth_token");
+
+          if (!authToken) {
+            console.log(
+              "No auth token found in localStorage, checking cookies..."
+            );
+
+            // Try to get from cookies
+            const cookies = document.cookie.split(";");
+            const tokenCookie = cookies.find((c) =>
+              c.trim().startsWith("auth_token=")
+            );
+
+            if (!tokenCookie) {
+              console.log(
+                "No auth token found in cookies either, skipping cart merge"
+              );
+              return;
+            }
+          }
+
+          console.log("Auth token found, attempting to merge carts");
+
           // Call API to merge carts in Redis
           await apiClient("/cart/merge", {
             method: "POST",
@@ -103,22 +133,23 @@ export function useCart() {
           // Fetch the merged cart
           const mergedCart = await getCart(sessionId);
 
-          // Update Redux with the merged cart from Redis
+          // Update Redux with the merged cart
           dispatch(
             hydrateCart({
               sessionId,
               items: mergedCart.items.map((item) => ({
-                id: item.productId, // Keep this for backward compatibility
+                id: item.productId,
                 productId: item.productId,
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
-                // Add image if available
                 ...(item.image && { image: item.image }),
               })),
               total: mergedCart.total,
-            }),
+            })
           );
+
+          console.log("Cart merge successful");
         } catch (err) {
           console.error("Failed to merge carts:", err);
         } finally {
@@ -132,28 +163,42 @@ export function useCart() {
 
   const addItem = async (product: Product, quantity: number) => {
     setIsLoading(true);
-    try {
-      const response = await fetch("/api/cart/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: product.id,
-          quantity,
-        }),
-        credentials: "include", // Important for cookies
-      });
+    setError(null);
 
-      if (!response.ok) {
-        throw new Error("Failed to add item to cart");
+    try {
+      // Make sure we have a session ID
+      if (!sessionId) {
+        // Wait for session initialization
+        const response = await createCartSession();
+        dispatch(setSessionId(response.sessionId));
       }
 
-      const updatedCart = await response.json();
-      dispatch(hydrateCart(updatedCart));
+      // Use the addToCart function from your API client
+      const updatedCart = await addToCart(product.id, quantity);
+
+      // Update Redux store with the response from the server
+      dispatch(
+        hydrateCart({
+          sessionId,
+          items: updatedCart.items.map((item) => ({
+            id: item.productId, // Keep this for backward compatibility
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            // Add image if available
+            ...(item.image && { image: item.image }),
+          })),
+          total: updatedCart.total,
+        })
+      );
+
       return updatedCart;
     } catch (error) {
       console.error("Error adding to cart:", error);
+      setError(
+        error instanceof Error ? error : new Error("Failed to add item to cart")
+      );
       throw error;
     } finally {
       setIsLoading(false);
@@ -182,13 +227,13 @@ export function useCart() {
             ...(item.image && { image: item.image }),
           })),
           total: updatedCart.total,
-        }),
+        })
       );
     } catch (err) {
       setError(
         err instanceof Error
           ? err
-          : new Error("Failed to remove item from cart"),
+          : new Error("Failed to remove item from cart")
       );
       throw err;
     } finally {
@@ -218,11 +263,11 @@ export function useCart() {
             ...(item.image && { image: item.image }),
           })),
           total: updatedCart.total,
-        }),
+        })
       );
     } catch (err) {
       setError(
-        err instanceof Error ? err : new Error("Failed to update cart item"),
+        err instanceof Error ? err : new Error("Failed to update cart item")
       );
       throw err;
     } finally {
@@ -248,7 +293,7 @@ export function useCart() {
     }
   };
 
-  const checkout = async () => {
+  const checkout = async (shippingAddress, paymentMethod) => {
     setIsLoading(true);
     setError(null);
 
@@ -258,18 +303,27 @@ export function useCart() {
       const checkoutData = {
         sessionId,
         ...(user?.id && { customerId: user.id }),
+        shippingAddress,
+        paymentMethod
       };
 
-      const order = await apiClient("/checkout", {
+      // Create Stripe checkout session
+      const response = await apiClient("/checkout", {
         method: "POST",
         body: checkoutData,
         requireAuth: !!user?.id, // Require auth only for logged-in users
       });
 
-      // Clear cart after successful checkout
+      // If we have a Stripe checkout URL, redirect to it
+      if (response.url) {
+        window.location.href = response.url;
+        return null; // Return null as we're redirecting
+      }
+
+      // Clear cart after successful checkout if no redirect
       await clearCart();
 
-      return order;
+      return response;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Checkout failed"));
       throw err;

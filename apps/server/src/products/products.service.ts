@@ -16,6 +16,9 @@ interface FindAllParams {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  featured?: boolean;
+  limit?: number;
+  page?: number;
 }
 
 @Injectable()
@@ -30,31 +33,59 @@ export class ProductsService {
       minRating, 
       search,
       sortBy,
-      sortOrder = 'asc'
+      sortOrder = 'asc',
+      featured,
+      limit = 20,
+      page = 1
     } = params;
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
 
     // Build the orderBy object based on sortBy and sortOrder
     const orderBy = sortBy 
       ? { [sortBy]: sortOrder } 
       : { createdAt: 'desc' as const };
 
+    // Build the where clause
+    const where: any = {};
+  
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+  
+    if (minPrice !== undefined) {
+      where.price = { ...where.price, gte: minPrice };
+    }
+  
+    if (maxPrice !== undefined) {
+      where.price = { ...where.price, lte: maxPrice };
+    }
+  
+    if (minRating !== undefined) {
+      where.rating = { gte: minRating };
+    }
+  
+    if (featured) {
+      where.featured = true;
+    }
+  
+    // Handle search - use contains without mode for compatibility
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { description: { contains: search } }
+      ];
+    }
+
     return this.prisma.product.findMany({
-      where: {
-        ...(categoryId && { categoryId }),
-        ...(minPrice && { price: { gte: minPrice } }),
-        ...(maxPrice && { price: { lte: maxPrice } }),
-        ...(minRating && { rating: { gte: minRating } }),
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
-      },
+      where,
       include: {
         category: true,
       },
       orderBy,
+      take: Number(limit),
+      skip
     });
   }
 

@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/hooks/useCart";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { User, LogOut } from "lucide-react";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -72,45 +75,49 @@ export default function Header() {
 
             {/* User Menu */}
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center text-gray-700 hover:text-blue-600">
-                  <span className="mr-1">{user.firstName || 'Account'}</span>
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-4 w-4" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M19 9l-7 7-7-7" 
-                    />
-                  </svg>
-                </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
-                  <Link 
-                    href="/account" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    My Account
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="h-4 w-4" />
+                    <span className="sr-only">User menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="w-56 bg-white border border-gray-200 shadow-md"
+                >
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none text-gray-900">{user.firstName || 'User'}</p>
+                      <p className="text-xs leading-none text-gray-500">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-gray-200" />
+                  <Link href="/account" className="cursor-pointer">
+                    <DropdownMenuItem className="text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                      Profile
+                    </DropdownMenuItem>
                   </Link>
-                  <Link 
-                    href="/orders" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    My Orders
+                  <Link href="/orders" className="cursor-pointer">
+                    <DropdownMenuItem className="text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                      Orders
+                    </DropdownMenuItem>
                   </Link>
-                  <button 
+                  <Link href="/wishlist" className="cursor-pointer">
+                    <DropdownMenuItem className="text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                      Wishlist
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator className="bg-gray-200" />
+                  <DropdownMenuItem 
                     onClick={logout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
-                    Logout
-                  </button>
-                </div>
-              </div>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <div className="flex space-x-4">
                 <Link 

@@ -261,4 +261,32 @@ export class OrdersService {
 
     return { ...userCart, subtotal, tax, total };
   }
+
+  // Add a new method to get user cart
+  async getUserCart(userId: string) {
+    // Get user cart from Redis
+    const userCartKey = `cart:user:${userId}`;
+    const cart = await this.redisService.get(userCartKey);
+    
+    if (!cart) {
+      return { items: [], subtotal: 0, tax: 0, total: 0 };
+    }
+    
+    // Calculate subtotal
+    const subtotal = cart.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    
+    // Calculate tax (8%)
+    const tax = subtotal * 0.08;
+    
+    // Calculate total
+    const total = subtotal + tax;
+    
+    // Refresh TTL on cart access
+    await this.redisService.expire(userCartKey, 60 * 60 * 24);
+    
+    return { ...cart, subtotal, tax, total };
+  }
 }
