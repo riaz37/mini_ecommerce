@@ -1,38 +1,41 @@
 // Define the API base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-type ApiOptions = {
-  method?: string;
+type ApiClientOptions = {
   body?: any;
-  headers?: Record<string, string>;
+  method?: string;
   requireAuth?: boolean;
 };
 
 export async function apiClient(
   endpoint: string,
-  { method = "GET", body, headers = {}, requireAuth = false }: ApiOptions = {},
+  options: ApiClientOptions = {}
 ) {
+  const { body, method = "GET", requireAuth = false } = options;
+  
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  
+  // Add auth header if required
+  if (requireAuth) {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("Authentication required");
+    }
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  const config: RequestInit = {
+    method,
+    headers,
+    credentials: 'include', // This is important for cookies
+    body: body ? JSON.stringify(body) : undefined,
+  };
+  
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
-  const options: RequestInit = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-    credentials: "include", // Include cookies for auth and session
-  };
-
-  if (requireAuth) {
-    // Get token from cookie (handled by credentials: 'include')
-    // No need to manually set Authorization header as the cookie will be sent
-  }
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, options);
+  const response = await fetch(url, config);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

@@ -51,7 +51,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="mt-2 flex items-center justify-between">
           <span className="text-gray-900 font-bold">
-            ${product.price.toFixed(2)}
+            ${typeof product.price === 'number' 
+              ? product.price.toFixed(2) 
+              : parseFloat(product.price).toFixed(2)}
           </span>
 
           <button

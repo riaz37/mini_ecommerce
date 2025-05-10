@@ -130,7 +130,7 @@ export function useCart() {
     mergeCartsAfterLogin();
   }, [user?.id, sessionId, dispatch]);
 
-  const addToCart = async (productId: string, quantity: number) => {
+  const addItem = async (product: Product, quantity: number) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/cart/add", {
@@ -139,7 +139,7 @@ export function useCart() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          productId,
+          productId: product.id,
           quantity,
         }),
         credentials: "include", // Important for cookies

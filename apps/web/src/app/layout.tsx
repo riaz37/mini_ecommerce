@@ -1,4 +1,7 @@
 import { AuthProvider } from "@/context/AuthContext";
+import { Providers } from "@/store/provider"; // Import Redux provider
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -12,7 +15,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <Providers> {/* Redux provider */}
+          <AuthProvider>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
+          </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

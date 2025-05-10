@@ -58,15 +58,14 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Return cart contents' })
   @Get('cart')
   async getCart(@Req() request: Request) {
-    // Always get sessionId from cookies
-    const sessionId = (request as unknown as ExpressRequest).cookies[
-      'cart_session_id'
-    ];
-
-    if (!sessionId) {
+    // Check if cookies exist
+    const cookies = (request as unknown as ExpressRequest).cookies;
+    
+    if (!cookies || !cookies.cart_session_id) {
       throw new BadRequestException('No cart session found');
     }
-
+    
+    const sessionId = cookies.cart_session_id;
     return this.ordersService.getCart(sessionId);
   }
 
@@ -75,15 +74,15 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   @Post('cart/add')
   async addToCart(@Body() addToCartDto: AddToCartDto, @Req() request: Request) {
-    // Get sessionId from cookies, not from DTO
-    const sessionId = (request as unknown as ExpressRequest).cookies[
-      'cart_session_id'
-    ];
-
-    if (!sessionId) {
+    // Check if cookies exist
+    const cookies = (request as unknown as ExpressRequest).cookies;
+    
+    if (!cookies || !cookies.cart_session_id) {
       throw new BadRequestException('No cart session found');
     }
-
+    
+    const sessionId = cookies.cart_session_id;
+    
     // Use sessionId from cookies
     return this.ordersService.addToCart(
       sessionId,

@@ -9,12 +9,15 @@ export async function getCategoryById(id: string): Promise<Category> {
   return await apiClient(`categories/${id}`);
 }
 
-export async function getCategoryProducts(categoryId: string, options = {}): Promise<Product[]> {
+export async function getCategoryProducts(
+  categoryId: string,
+  options = {}
+): Promise<Product[]> {
   const queryParams = new URLSearchParams();
 
   for (const [key, value] of Object.entries(options)) {
     if (value !== undefined) {
-      queryParams.append(key, value.toString());
+      queryParams.append(key, value !== null ? value.toString() : "");
     }
   }
 

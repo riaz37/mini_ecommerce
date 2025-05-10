@@ -16,6 +16,11 @@ export default function ProductList({ initialFilters = {} }: ProductListProps) {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ProductFilters>(initialFilters);
 
+  // Update filters when initialFilters prop changes
+  useEffect(() => {
+    setFilters(initialFilters);
+  }, [initialFilters]);
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);

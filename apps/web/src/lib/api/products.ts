@@ -13,11 +13,11 @@ export async function getProducts(filters: ProductFilters = {}) {
     queryParams.append("search", filters.search);
   }
 
-  if (filters.minPrice) {
+  if (filters.minPrice !== undefined) {
     queryParams.append("minPrice", filters.minPrice.toString());
   }
 
-  if (filters.maxPrice) {
+  if (filters.maxPrice !== undefined) {
     queryParams.append("maxPrice", filters.maxPrice.toString());
   }
 

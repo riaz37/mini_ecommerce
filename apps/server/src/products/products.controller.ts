@@ -34,9 +34,9 @@ export class ProductsController {
     description: 'Return all products matching filters',
   })
   @ApiQuery({
-    name: 'category',
+    name: 'categoryId',
     required: false,
-    description: 'Filter by category name',
+    description: 'Filter by category ID',
   })
   @ApiQuery({
     name: 'minPrice',
@@ -58,20 +58,34 @@ export class ProductsController {
     required: false,
     description: 'Search in name and description',
   })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    description: 'Sort by field (e.g., price, rating)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    description: 'Sort order (asc or desc)',
+  })
   @Get()
   async findAll(
-    @Query('category') category?: string,
+    @Query('categoryId') categoryId?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
     @Query('minRating') minRating?: string,
     @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
     return this.productsService.findAll({
-      category,
+      categoryId,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
       minRating: minRating ? parseFloat(minRating) : undefined,
       search,
+      sortBy,
+      sortOrder,
     });
   }
 

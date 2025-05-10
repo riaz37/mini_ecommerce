@@ -9,11 +9,13 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateRatingDto } from './dto/create-rating.dto';
 
 interface FindAllParams {
-  category?: string;
+  categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
   search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 @Injectable()
@@ -21,24 +23,38 @@ export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(params: FindAllParams) {
-    const { category, minPrice, maxPrice, minRating, search } = params;
+    const { 
+      categoryId, 
+      minPrice, 
+      maxPrice, 
+      minRating, 
+      search,
+      sortBy,
+      sortOrder = 'asc'
+    } = params;
+
+    // Build the orderBy object based on sortBy and sortOrder
+    const orderBy = sortBy 
+      ? { [sortBy]: sortOrder } 
+      : { createdAt: 'desc' as const };
 
     return this.prisma.product.findMany({
       where: {
-        ...(category && { category: { name: category } }),
+        ...(categoryId && { categoryId }),
         ...(minPrice && { price: { gte: minPrice } }),
         ...(maxPrice && { price: { lte: maxPrice } }),
         ...(minRating && { rating: { gte: minRating } }),
         ...(search && {
           OR: [
-            { name: { contains: search } },
-            { description: { contains: search } },
+            { name: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
           ],
         }),
       },
       include: {
         category: true,
       },
+      orderBy,
     });
   }
 
