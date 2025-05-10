@@ -12,7 +12,7 @@ export class OrdersService {
   ) {}
 
   async getCart(sessionId: string) {
-    // Get cart from Redis
+    // Get cart from Redis using the normalized method
     const cart = await this.redisService.getCart(sessionId);
 
     if (!cart) {
@@ -31,7 +31,7 @@ export class OrdersService {
     // Calculate total
     const total = subtotal + tax;
 
-    // Refresh TTL on cart access
+    // Refresh TTL on cart access - use the key directly since our setCart method normalizes it
     await this.redisService.expire(`cart:${sessionId}`, 60 * 60 * 24);
 
     return { ...cart, subtotal, tax, total };
@@ -212,9 +212,8 @@ export class OrdersService {
   }
 
   async mergeCart(sessionId: string, userId: string) {
-    // Get cart from Redis
-    const cartKey = `cart:${sessionId}`;
-    const guestCart = await this.redisService.get(cartKey);
+    // Get cart from Redis using normalized method
+    const guestCart = await this.redisService.getCart(sessionId);
 
     if (!guestCart || !guestCart.items || guestCart.items.length === 0) {
       return { items: [], subtotal: 0, tax: 0, total: 0 };
@@ -222,7 +221,7 @@ export class OrdersService {
 
     // Get user's cart or create a new one
     const userCartKey = `cart:user:${userId}`;
-    const userCart = (await this.redisService.get(userCartKey)) || {
+    const userCart = await this.redisService.getCart(userCartKey) || {
       items: [],
     };
 
@@ -253,20 +252,20 @@ export class OrdersService {
     // Calculate total
     const total = subtotal + tax;
 
-    // Save merged cart to Redis
-    await this.redisService.set(userCartKey, userCart, 60 * 60 * 24);
+    // Save merged cart to Redis using consistent method
+    await this.redisService.setCart(userCartKey, userCart);
 
-    // Clear guest cart
-    await this.redisService.del(cartKey);
+    // Clear guest cart using deleteCart method
+    await this.redisService.deleteCart(sessionId);
 
     return { ...userCart, subtotal, tax, total };
   }
 
-  // Add a new method to get user cart
+  // Update getUserCart method to use the normalized methods
   async getUserCart(userId: string) {
-    // Get user cart from Redis
     const userCartKey = `cart:user:${userId}`;
-    const cart = await this.redisService.get(userCartKey);
+    // Use getCart method which now handles normalized keys
+    const cart = await this.redisService.getCart(userCartKey);
     
     if (!cart) {
       return { items: [], subtotal: 0, tax: 0, total: 0 };

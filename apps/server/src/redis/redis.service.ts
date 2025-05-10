@@ -44,7 +44,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   // Cart-specific methods
   async getCart(sessionId: string) {
-    return this.get(`cart:${sessionId}`);
+    // Normalize the key format to handle both user and session carts
+    const key = sessionId.startsWith('cart:') ? sessionId : `cart:${sessionId}`;
+    return this.get(key);
   }
 
   async setCart(
@@ -52,11 +54,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     cart: any,
     ttl: number = this.DEFAULT_CART_TTL,
   ) {
-    return this.set(`cart:${sessionId}`, cart, ttl);
+    // Normalize the key format to handle both user and session carts
+    const key = sessionId.startsWith('cart:') ? sessionId : `cart:${sessionId}`;
+    return this.set(key, cart, ttl);
   }
 
   async deleteCart(sessionId: string) {
-    return this.del(`cart:${sessionId}`);
+    // Normalize the key format to handle both user and session carts
+    const key = sessionId.startsWith('cart:') ? sessionId : `cart:${sessionId}`;
+    return this.del(key);
   }
 
   // Set expiry on existing key

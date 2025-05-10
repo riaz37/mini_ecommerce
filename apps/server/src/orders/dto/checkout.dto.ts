@@ -41,8 +41,9 @@ export class PaymentMethodDto {
 }
 
 export class CheckoutDto {
+  @IsOptional()
   @IsString()
-  sessionId: string;
+  sessionId?: string;
 
   @IsOptional()
   @IsString()
@@ -55,4 +56,12 @@ export class CheckoutDto {
   @ValidateNested()
   @Type(() => PaymentMethodDto)
   paymentMethod: PaymentMethodDto;
+  
+  // Add optional cart property to support Stripe checkout flow
+  @IsOptional()
+  cart?: any;
+  
+  // Add optional stripeSession property for Stripe checkout
+  @IsOptional()
+  stripeSession?: any;
 }
