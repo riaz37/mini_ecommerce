@@ -13,13 +13,15 @@ import {
   Req,
   BadRequestException,
   NotFoundException,
+  InternalServerErrorException,
+  Headers,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OrdersService } from './orders.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import { CheckoutDto } from './dto/checkout.dto';
+import { CheckoutDto, PaymentMethodType } from './dto/checkout.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -184,98 +186,243 @@ export class OrdersController {
     return this.ordersService.mergeCart(sessionId, req.user.userId);
   }
 
-  @ApiOperation({ summary: 'Checkout and create an order' })
+  @ApiOperation({ summary: 'Process checkout' })
   @ApiResponse({ status: 201, description: 'Order created successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 404, description: 'Cart not found or empty' })
   @Post('checkout')
   async checkout(
     @Body() checkoutDto: CheckoutDto,
     @Req() request: ExpressRequest,
   ) {
-    // Get sessionId from cookies instead of request body
-    const cookies = request.cookies;
-    const sessionId = cookies?.cart_session_id;
+    try {
+      // If sessionId is not provided in the DTO, get it from cookies
+      if (!checkoutDto.sessionId && request.cookies?.cart_session_id) {
+        checkoutDto.sessionId = request.cookies.cart_session_id;
+      }
 
-    if (!sessionId) {
-      throw new BadRequestException('No cart session found');
-    }
+      // Validate that we have a sessionId
+      if (!checkoutDto.sessionId) {
+        throw new BadRequestException('Session ID is required');
+      }
 
-    const { customerId, shippingAddress, paymentMethod } = checkoutDto;
-
-    // Get cart from Redis
-    const cart = await this.ordersService.getCart(sessionId);
-
-    if (!cart || cart.items.length === 0) {
-      throw new NotFoundException('Cart is empty');
-    }
-
-    // Create Stripe checkout session for credit card payments
-    if (paymentMethod.type === 'credit_card') {
-      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      // Get cart from Redis
+      const cart = await this.ordersService.getCart(checkoutDto.sessionId);
       
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: cart.items.map((item) => ({
+      if (!cart || !cart.items || cart.items.length === 0) {
+        throw new BadRequestException('Cart is empty');
+      }
+
+      // For credit card payments, create a Stripe checkout session
+      if (checkoutDto.paymentMethod.type === PaymentMethodType.CREDIT_CARD) {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        
+        // Format line items for Stripe
+        const lineItems = cart.items.map(item => ({
           price_data: {
             currency: 'usd',
             product_data: {
               name: item.name,
               images: item.image ? [item.image] : [],
             },
-            unit_amount: Math.round(item.price * 100),
+            unit_amount: Math.round(item.price * 100), // Convert to cents
           },
           quantity: item.quantity,
-        })),
-        mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/checkout?canceled=true`,
-        metadata: {
-          sessionId,
-          customerId: customerId || '',
-          shippingAddress: JSON.stringify(shippingAddress),
-        },
-      });
+        }));
 
-      return { url: session.url };
+        // Store shipping address and customer ID in metadata
+        const metadata = {
+          sessionId: checkoutDto.sessionId,
+          shippingAddress: JSON.stringify(checkoutDto.shippingAddress),
+        };
+        
+        if (checkoutDto.customerId) {
+          metadata['customerId'] = checkoutDto.customerId;
+        }
+
+        // Create Stripe checkout session
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: lineItems,
+          mode: 'payment',
+          success_url: `${process.env.FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.FRONTEND_URL}/checkout/cancel`,
+          metadata: metadata,
+        });
+
+        // Return the session URL for the frontend to redirect to
+        return { url: session.url };
+      } else {
+        // For other payment methods, process directly
+        return this.ordersService.checkout(checkoutDto);
+      }
+    } catch (error) {
+      this.handleControllerError(error, 'Failed to create order');
     }
-
-    // For non-Stripe payments, use the existing checkout flow
-    return this.ordersService.checkout({
-      sessionId,
-      customerId,
-      shippingAddress,
-      paymentMethod,
-    });
   }
 
   @ApiOperation({ summary: 'Handle successful Stripe checkout' })
   @Get('checkout/success')
-  async handleStripeSuccess(@Query('session_id') sessionId: string) {
+  async handleStripeSuccess(
+    @Query('session_id') stripeSessionId: string,
+    @Req() request: ExpressRequest
+  ) {
+    try {
+      if (!stripeSessionId) {
+        throw new BadRequestException('Missing Stripe session ID');
+      }
+
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+      // Retrieve the Stripe checkout session with expanded payment intent
+      const session = await stripe.checkout.sessions.retrieve(
+        stripeSessionId,
+        { expand: ['payment_intent'] }
+      );
+
+      // Verify the payment was successful
+      if (session.payment_status !== 'paid') {
+        throw new BadRequestException('Payment not completed');
+      }
+
+      // Get cart session ID from metadata
+      const cartSessionId = session.metadata.sessionId;
+      if (!cartSessionId) {
+        throw new BadRequestException('Invalid session data');
+      }
+      
+      // Verify that this cart session belongs to the current user/session
+      const cookies = request.cookies;
+      const currentSessionId = cookies?.cart_session_id;
+      
+      // If the current session doesn't match the one used to create the order,
+      // we'll still process it but log a warning as this could indicate session hijacking
+      if (currentSessionId && currentSessionId !== cartSessionId) {
+        console.warn(`Session mismatch in Stripe checkout: ${currentSessionId} vs ${cartSessionId}`);
+      }
+
+      // Create order from the session metadata
+      const {
+        customerId,
+        shippingAddress,
+      } = session.metadata;
+
+      if (!shippingAddress) {
+        throw new BadRequestException('Missing shipping address');
+      }
+
+      // Create order in database
+      const order = await this.ordersService.checkout({
+        sessionId: cartSessionId,
+        customerId: customerId || undefined,
+        shippingAddress: JSON.parse(shippingAddress),
+        paymentMethod: {
+          type: PaymentMethodType.CREDIT_CARD,
+          details: {
+            paymentIntentId: session.payment_intent?.id,
+            paymentMethod: session.payment_intent?.payment_method,
+          }
+        },
+        stripeSession: session,
+      });
+
+      return order;
+    } catch (error) {
+      this.handleControllerError(error, 'Failed to process Stripe payment');
+    }
+  }
+
+  // Add a new webhook endpoint for Stripe events
+  @ApiOperation({ summary: 'Handle Stripe webhooks' })
+  @Post('webhook/stripe')
+  async handleStripeWebhook(
+    @Body() payload: any,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    if (!signature) {
+      throw new BadRequestException('Missing Stripe signature');
+    }
+
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    // Retrieve the Stripe checkout session
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    try {
+      // Verify the event using the signature
+      const event = stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        endpointSecret
+      );
 
-    // Create order from the session metadata
-    const {
-      sessionId: cartSessionId,
-      customerId,
-      shippingAddress,
-    } = session.metadata;
+      // Handle different event types
+      switch (event.type) {
+        case 'checkout.session.completed':
+          const session = event.data.object;
+          
+          // Process the successful checkout
+          await this.processSuccessfulCheckout(session);
+          break;
+          
+        case 'payment_intent.payment_failed':
+          const paymentIntent = event.data.object;
+          console.log(`Payment failed: ${paymentIntent.id}`);
+          // Handle failed payment (e.g., notify customer)
+          break;
+          
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      return { received: true };
+    } catch (error) {
+      console.error('Stripe webhook error:', error);
+      throw new BadRequestException(`Webhook error: ${error.message}`);
+    }
+  }
+
+  // Helper method to process successful checkout
+  private async processSuccessfulCheckout(session: any) {
+    // Get cart session ID from metadata
+    const cartSessionId = session.metadata.sessionId;
+    const customerId = session.metadata.customerId;
+    const shippingAddress = session.metadata.shippingAddress;
+
+    if (!cartSessionId || !shippingAddress) {
+      throw new BadRequestException('Invalid session data');
+    }
 
     // Create order in database
-    const order = await this.ordersService.checkout({
+    await this.ordersService.checkout({
       sessionId: cartSessionId,
       customerId: customerId || undefined,
       shippingAddress: JSON.parse(shippingAddress),
       paymentMethod: {
-        type: 'credit_card',
+        type: PaymentMethodType.CREDIT_CARD,
+        details: {
+          paymentIntentId: session.payment_intent,
+        }
       },
-      cart: await this.ordersService.getCart(cartSessionId),
       stripeSession: session,
     });
+  }
 
-    return order;
+  // Helper method for consistent error handling in controllers
+  private handleControllerError(error: any, defaultMessage: string): never {
+    // If it's already a NestJS exception, rethrow it
+    if (
+      error instanceof BadRequestException ||
+      error instanceof NotFoundException ||
+      error instanceof InternalServerErrorException
+    ) {
+      throw error;
+    }
+    
+    // Log the error for debugging
+    console.error(`${defaultMessage}:`, error);
+    
+    // Throw a standardized error
+    throw new InternalServerErrorException(
+      `${defaultMessage}: ${error.message || 'Unknown error'}`
+    );
   }
 }

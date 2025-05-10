@@ -59,14 +59,16 @@ model Product {
 }
 
 model Order {
-  id         String      @id @default(uuid())
-  customerId String
-  customer   Customer    @relation(fields: [customerId], references: [id])
-  status     OrderStatus @default(PENDING)
-  total      Decimal     @db.Decimal(10, 2)
-  items      OrderItem[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id              String      @id @default(uuid())
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  status          OrderStatus @default(PENDING)
+  total           Decimal     @db.Decimal(10, 2)
+  items           OrderItem[]
+  shippingAddress String?     @db.Text
+  paymentMethod   String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@index([customerId])
 }
