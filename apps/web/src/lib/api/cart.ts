@@ -5,10 +5,13 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  image?: string;
 }
 
 export interface Cart {
   items: CartItem[];
+  subtotal: number;
+  tax: number;
   total: number;
 }
 
@@ -19,20 +22,15 @@ export async function createCartSession(): Promise<{ sessionId: string }> {
   });
 }
 
-export async function getCart(sessionId?: string): Promise<Cart> {
-  const isLoggedIn = !!localStorage.getItem("auth_token") || 
-    document.cookie.includes("auth_token=");
-  
-  return await apiClient(`/cart`, {
-    requireAuth: isLoggedIn
-  });
+export async function getCart(): Promise<Cart> {
+  // Never require auth for cart operations - we'll send the auth token if available
+  return await apiClient(`/cart`);
 }
 
 export async function addToCart(
   productId: string,
   quantity: number,
 ) {
-  // No need to pass sessionId as it's in cookies
   return await apiClient("/cart/add", {
     method: "POST",
     body: { productId, quantity },
@@ -43,7 +41,6 @@ export async function updateCartItem(
   productId: string,
   quantity: number,
 ) {
-  // No need to pass sessionId as it's in cookies
   return await apiClient(`/cart/items/${productId}`, {
     method: "PUT",
     body: { quantity },
@@ -53,23 +50,14 @@ export async function updateCartItem(
 export async function removeCartItem(
   productId: string,
 ) {
-  // No need to pass sessionId as it's in cookies
   return await apiClient(`/cart/items/${productId}`, {
     method: "DELETE",
   });
 }
 
 export async function clearCart() {
-  // No need to pass sessionId as it's in cookies
   return await apiClient(`/cart`, {
     method: "DELETE",
   });
 }
 
-export async function mergeCart(sessionId: string) {
-  return await apiClient("/cart/merge", {
-    method: "POST",
-    body: { sessionId },
-    requireAuth: true,
-  });
-}

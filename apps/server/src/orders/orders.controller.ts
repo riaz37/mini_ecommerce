@@ -60,7 +60,7 @@ export class OrdersController {
   @ApiOperation({ summary: 'Get cart contents' })
   @ApiResponse({ status: 200, description: 'Return cart contents' })
   @Get('cart')
-  async getCart(@Req() request: Request) {
+  async getCart(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     // Check if user is authenticated
     const user = (request as any).user;
     const cookies = (request as unknown as ExpressRequest).cookies;
@@ -75,13 +75,29 @@ export class OrdersController {
         if (sessionId) {
           return this.ordersService.getCart(sessionId);
         }
-        throw new BadRequestException('No cart found');
       }
     }
 
-    // For guest users, require session ID
+    // For guest users, create a session if one doesn't exist
     if (!sessionId) {
-      throw new BadRequestException('No cart session found');
+      const newSessionId = uuidv4();
+      
+      // Set session ID in HTTP-only cookie
+      response.cookie('cart_session_id', newSessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/',
+        sameSite: 'strict',
+      });
+      
+      // Return empty cart for new session
+      return { 
+        items: [], 
+        subtotal: 0, 
+        tax: 0, 
+        total: 0 
+      };
     }
 
     return this.ordersService.getCart(sessionId);
@@ -91,16 +107,43 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Product added to cart' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @Post('cart/add')
-  async addToCart(@Body() addToCartDto: AddToCartDto, @Req() request: Request) {
+  async addToCart(
+    @Body() addToCartDto: AddToCartDto, 
+    @Req() request: ExpressRequest, 
+    @Res({ passthrough: true }) response: Response
+  ) {
+    // Log cookies for debugging
+    console.log('Cookies received:', request.cookies);
+    
     // Check if cookies exist
-    const cookies = (request as unknown as ExpressRequest).cookies;
+    const sessionId = request.cookies?.cart_session_id;
 
-    if (!cookies || !cookies.cart_session_id) {
-      throw new BadRequestException('No cart session found');
+    if (!sessionId) {
+      console.log('No session ID found in cookies, creating new session');
+      // Create a new session if one doesn't exist
+      const newSessionId = uuidv4();
+      
+      // Set session ID in HTTP-only cookie
+      response.cookie('cart_session_id', newSessionId, {
+        httpOnly: true,
+        secure: false, // Set to false for local development
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/',
+        sameSite: 'none', // Try 'none' for cross-site requests
+      });
+      
+      console.log('Created new session ID:', newSessionId);
+      
+      // Use the new session ID
+      return this.ordersService.addToCart(
+        newSessionId,
+        addToCartDto.productId,
+        addToCartDto.quantity,
+      );
     }
 
-    const sessionId = cookies.cart_session_id;
-
+    console.log('Using existing session ID:', sessionId);
+    
     // Use sessionId from cookies
     return this.ordersService.addToCart(
       sessionId,

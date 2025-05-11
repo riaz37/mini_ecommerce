@@ -1,18 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { 
-  IsString, 
-  IsOptional, 
-  IsObject, 
-  ValidateNested, 
+import {
+  IsString,
+  IsOptional,
+  IsObject,
+  ValidateNested,
   IsNotEmpty,
-  IsEnum
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum PaymentMethodType {
   CREDIT_CARD = 'credit_card',
-  PAYPAL = 'paypal',
-  BANK_TRANSFER = 'bank_transfer',
 }
 
 export class PaymentMethodDto {

@@ -29,7 +29,7 @@ export interface Order {
     phone: string;
   };
   paymentMethod: {
-    type: "credit_card" | "paypal";
+    type: "credit_card";
     details: any;
   };
 }
@@ -43,9 +43,21 @@ export async function getOrderById(id: string) {
 }
 
 export async function createOrder(data: {
-  cartId: string;
-  shippingAddress: any;
-  paymentMethod: any;
+  sessionId: string;
+  shippingAddress: {
+    fullName: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    phone: string;
+  };
+  paymentMethod: {
+    type: "credit_card";
+    details?: any;
+  };
 }) {
   return await apiClient("/orders", {
     method: "POST",

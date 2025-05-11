@@ -88,7 +88,7 @@ export interface ShippingAddress {
 }
 
 export interface PaymentMethod {
-  type: "credit_card" | "paypal";
+  type: "credit_card" | "bank_transfer";
   details: any;
 }
 

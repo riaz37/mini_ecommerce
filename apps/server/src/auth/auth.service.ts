@@ -93,4 +93,12 @@ export class AuthService {
       select: { id: true },
     });
   }
+
+  async generateRefreshToken(userId: string) {
+    const payload = { sub: userId };
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+      expiresIn: '7d',
+    });
+  }
 }

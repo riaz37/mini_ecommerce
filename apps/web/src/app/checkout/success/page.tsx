@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { apiClient } from "@/lib/api/client";
+import { useCart } from "@/hooks/useCart";
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
@@ -14,7 +14,8 @@ export default function CheckoutSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<any>(null);
-
+  const { clearCart } = useCart();
+  
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
     
@@ -28,6 +29,9 @@ export default function CheckoutSuccessPage() {
         // Call the API to process the successful payment
         const orderData = await apiClient(`/checkout/success?session_id=${sessionId}`);
         setOrder(orderData);
+        
+        // Clear the cart after successful payment
+        clearCart();
       } catch (err) {
         console.error("Error processing payment:", err);
         setError("Failed to process payment. Please contact customer support.");
@@ -44,7 +48,7 @@ export default function CheckoutSuccessPage() {
     }, 5000);
     
     return () => clearTimeout(timeout);
-  }, [router, searchParams]);
+  }, [router, searchParams, clearCart]);
 
   if (loading) {
     return (
@@ -76,6 +80,13 @@ export default function CheckoutSuccessPage() {
         <p className="text-gray-600 mb-8">
           Thank you for your purchase. Your order has been confirmed.
         </p>
+        {order && (
+          <div className="mb-6 text-left bg-gray-50 p-4 rounded-lg">
+            <h2 className="font-medium mb-2">Order Details</h2>
+            <p className="text-sm text-gray-600">Order ID: {order.id}</p>
+            <p className="text-sm text-gray-600">Total: ${order.total.toFixed(2)}</p>
+          </div>
+        )}
         <p className="text-gray-500 text-sm mb-6">
           Redirecting to homepage in a few seconds...
         </p>

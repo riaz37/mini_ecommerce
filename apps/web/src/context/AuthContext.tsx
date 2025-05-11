@@ -7,7 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { apiClient } from "@/lib/api/client";
+import { apiClient, setAuthToken } from "@/lib/api/client";
 
 type User = {
   id: string;
@@ -43,12 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Try to get current user with existing credentials (cookies)
+        // Try to refresh the token on initial load
+        const refreshed = await refreshToken();
+        
+        if (!refreshed) {
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+        
+        // If refresh successful, get user data
         const userData = await apiClient("auth/me", {
-          method: "GET",
-          requireAuth: true,
+          requireAuth: true
         });
-
+        
         setUser({
           id: userData.id,
           email: userData.email,
@@ -57,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           customerId: userData.customerId,
         });
       } catch (err) {
-        // Not authenticated, that's okay
+        console.error("Failed to check auth:", err);
+        setAuthToken(null);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -67,6 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
+  // Function to refresh the access token
+  const refreshToken = async (): Promise<boolean> => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include', // Include cookies
+      });
+      
+      if (!response.ok) return false;
+      
+      const data = await response.json();
+      setAuthToken(data.access_token);
+      return true;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      return false;
+    }
+  };
+
   const login = async (credentials: { email: string; password: string }) => {
     setIsLoading(true);
     setError(null);
@@ -75,25 +103,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         body: credentials,
       });
-      
-      if (!response.access_token) {
-        console.error("No access_token received from server");
-        throw new Error("Authentication failed: No token received");
-      }
-      
-      // Store the token in a cookie with proper attributes
-      document.cookie = `auth_token=${response.access_token}; path=/; max-age=86400; SameSite=Strict`;
-      localStorage.setItem('auth_token', response.access_token);
+
+      // Store token in memory (not localStorage)
+      setAuthToken(response.access_token);
       
       // Set user in state
       setUser(response.user);
-      
+
       // Force cart refresh after login
       await apiClient("/cart/merge", {
         method: "POST",
         requireAuth: true,
       });
-      
+
       return response;
     } catch (error) {
       console.error("Login failed:", error);
@@ -127,19 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      // Store the token in cookies and localStorage
-      if (loginResponse.access_token) {
-        document.cookie = `auth_token=${loginResponse.access_token}; path=/; max-age=86400; SameSite=Strict`;
-        localStorage.setItem('auth_token', loginResponse.access_token);
-      }
-
-      setUser({
-        id: loginResponse.user.id,
-        email: loginResponse.user.email,
-        name: loginResponse.user.name,
-        role: loginResponse.user.role,
-        customerId: loginResponse.user.customerId,
-      });
+      // Store token in memory (not localStorage)
+      setAuthToken(loginResponse.access_token);
+      
+      setUser(loginResponse.user);
     } catch (err) {
       setError("Registration failed. Please try again.");
       throw err;
@@ -153,9 +166,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiClient("auth/logout", {
         method: "POST",
+        requireAuth: true,
       });
 
-      // No need to remove from localStorage
+      // Clear token from memory
+      setAuthToken(null);
+      
       setUser(null);
     } finally {
       setIsLoading(false);

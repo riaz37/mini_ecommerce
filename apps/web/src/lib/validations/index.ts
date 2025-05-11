@@ -46,9 +46,10 @@ export const checkoutSchema = z.object({
     phone: z.string().min(1, { message: "Phone number is required" }),
   }),
   paymentMethod: z.object({
-    type: z.enum(["credit_card", "paypal"], {
+    type: z.enum(["credit_card"], {
       required_error: "Please select a payment method",
     }),
+    details: z.record(z.any()).optional(),
   }),
 });
 
@@ -69,4 +70,3 @@ export const contactFormSchema = z.object({
     .string()
     .min(10, { message: "Message must be at least 10 characters" }),
 });
-

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/context/AuthContext";
 import { checkoutSchema } from "@/lib/validations";
+import { ShippingAddress, PaymentMethod } from "@/lib/types";
 import { ChevronLeft, CheckCircle } from "lucide-react";
 import {
   Form,
@@ -23,6 +24,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { apiClient } from "@/lib/api/client";
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -30,7 +33,11 @@ export default function CheckoutPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  
+  // Stripe hooks
+  const stripe = useStripe();
+  const elements = useElements();
 
   // Redirect to login if user is not authenticated
   useEffect(() => {
@@ -79,7 +86,7 @@ export default function CheckoutPage() {
     },
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: z.infer<typeof checkoutSchema>) => {
     if (cart.items.length === 0) {
       setError("Your cart is empty");
       return;
@@ -87,26 +94,43 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     setError(null);
-
+    
     try {
-      const order = await checkout(
-        data.shippingAddress,
-        data.paymentMethod
-      );
+      const orderData = {
+        sessionId: cart.sessionId,
+        shippingAddress: data.shippingAddress as ShippingAddress,
+        paymentMethod: data.paymentMethod as PaymentMethod,
+      };
       
-      // If order is null, we've been redirected to Stripe
-      if (!order) return;
-      
-      // Show payment success screen for non-Stripe payments
-      setPaymentSuccess(true);
-      
-      // Redirect to homepage after 3 seconds
-      setTimeout(() => {
-        router.push('/');
-      }, 3000);
+      if (data.paymentMethod.type === "credit_card") {
+        // For credit card payments, create a Stripe checkout session
+        const response = await apiClient("/checkout", {
+          method: "POST",
+          body: orderData,
+        });
+        
+        // If we have a Stripe checkout URL, redirect to it
+        if (response.url) {
+          window.location.href = response.url;
+          return;
+        }
+        
+        // If we don't have a URL, something went wrong
+        setError("Failed to create payment session. Please try again.");
+      } else {
+        // For other payment methods, process directly
+        const order = await apiClient("/orders", {
+          method: "POST",
+          body: orderData,
+          requireAuth: true,
+        });
+        
+        // Redirect to order confirmation page
+        router.push(`/order-confirmation/${order.id}`);
+      }
     } catch (err) {
       console.error("Checkout error:", err);
-      setError(err instanceof Error ? err.message : "Failed to complete checkout");
+      setError("Failed to process payment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -11,18 +11,18 @@ export default function CartSummary() {
 
   // Use useMemo to calculate values only when cart changes
   const { subtotal, shipping, tax, total } = useMemo(() => {
-    // Use values from the cart
-    const subtotal = cart.subtotal || cart.total;
-    const tax = cart.tax || subtotal * 0.08;
+    // Always use values from the backend
+    const subtotal = cart.subtotal;
+    const tax = cart.tax;
 
     // Calculate shipping (free over $50)
     const shipping = subtotal > 50 ? 0 : 5.99;
 
-    // Calculate total
-    const total = cart.total || subtotal + shipping + tax;
+    // Calculate final total with shipping
+    const total = subtotal + shipping + tax;
 
     return { subtotal, shipping, tax, total };
-  }, [cart.subtotal, cart.total, cart.tax]);
+  }, [cart.subtotal, cart.tax]);
 
   const handleClearCart = async () => {
     setIsClearing(true);
