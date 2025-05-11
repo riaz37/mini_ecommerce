@@ -1,36 +1,64 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { createClient, RedisClientType } from 'redis';
+import { Redis } from '@upstash/redis';
 import { Cart } from '../orders/types/cart.types';
 
 @Injectable()
 export class RedisService implements OnModuleInit {
-  private client: RedisClientType;
+  private client: RedisClientType | Redis;
   private readonly DEFAULT_TTL = 3600; // 1 hour in seconds
   private readonly DEFAULT_CART_TTL = 86400; // 24 hours in seconds
+  private useUpstash = false;
 
   constructor() {}
 
   async onModuleInit() {
-    // Get Redis URL from environment variables, with Upstash URL as fallback
-    const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || 'redis://localhost:6379';
+    // Check if Upstash credentials are provided
+    const upstashUrl = process.env.UPSTASH_REDIS_URL;
+    const upstashToken = process.env.UPSTASH_REDIS_TOKEN;
+    
+    if (upstashUrl && upstashToken) {
+      // Use Upstash Redis SDK
+      this.client = new Redis({
+        url: upstashUrl,
+        token: upstashToken,
+      });
+      this.useUpstash = true;
+      console.log('Connected to Upstash Redis');
+      return;
+    }
+    
+    // Fall back to Redis client
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
     
     this.client = createClient({
       url: redisUrl,
-      // Add Upstash specific configuration if needed
       socket: {
         reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
       },
     });
 
-    this.client.on('error', (err) => console.error('Redis Client Error', err));
+    (this.client as RedisClientType).on('error', (err) => console.error('Redis Client Error', err));
 
-    await this.client.connect();
+    await (this.client as RedisClientType).connect();
     console.log('Connected to Redis at:', redisUrl.replace(/:[^:]*@/, ':***@')); // Hide password in logs
   }
 
   async get<T>(key: string): Promise<T | null> {
-    const value = await this.client.get(key);
-    return value ? JSON.parse(value) : null;
+    try {
+      let value;
+      
+      if (this.useUpstash) {
+        value = await (this.client as Redis).get(key);
+      } else {
+        value = await (this.client as RedisClientType).get(key);
+      }
+      
+      return value ? (typeof value === 'string' ? JSON.parse(value) : value) : null;
+    } catch (error) {
+      console.error('Redis get error:', error);
+      return null;
+    }
   }
 
   async set<T>(
@@ -38,16 +66,47 @@ export class RedisService implements OnModuleInit {
     value: T,
     ttl: number = this.DEFAULT_TTL,
   ): Promise<T> {
-    await this.client.set(key, JSON.stringify(value), { EX: ttl });
-    return value;
+    try {
+      const jsonValue = JSON.stringify(value);
+      
+      if (this.useUpstash) {
+        await (this.client as Redis).set(key, jsonValue, { ex: ttl });
+      } else {
+        await (this.client as RedisClientType).set(key, jsonValue, { EX: ttl });
+      }
+      
+      return value;
+    } catch (error) {
+      console.error('Redis set error:', error);
+      throw error;
+    }
   }
 
   async del(key: string): Promise<number> {
-    return this.client.del(key);
+    try {
+      if (this.useUpstash) {
+        return await (this.client as Redis).del(key);
+      } else {
+        return await (this.client as RedisClientType).del(key);
+      }
+    } catch (error) {
+      console.error('Redis del error:', error);
+      return 0;
+    }
   }
 
   async expire(key: string, ttl: number): Promise<boolean> {
-    return this.client.expire(key, ttl);
+    try {
+      if (this.useUpstash) {
+        const result = await (this.client as Redis).expire(key, ttl);
+        return result === 1;
+      } else {
+        return await (this.client as RedisClientType).expire(key, ttl);
+      }
+    } catch (error) {
+      console.error('Redis expire error:', error);
+      return false;
+    }
   }
 
   // Cart-specific methods
