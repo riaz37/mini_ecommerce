@@ -46,10 +46,11 @@ export const checkoutSchema = z.object({
     phone: z.string().min(1, { message: "Phone number is required" }),
   }),
   paymentMethod: z.object({
-    type: z.enum(["credit_card"], {
-      required_error: "Please select a payment method",
+    type: z.enum(["credit_card", "paypal", "bank_transfer"], {
+      required_error: "Payment method is required",
     }),
-    details: z.record(z.any()).optional(),
+    // We'll handle payment details on the backend or through a redirect
+    details: z.any().optional(),
   }),
 });
 

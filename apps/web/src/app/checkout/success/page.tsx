@@ -20,7 +20,8 @@ export default function CheckoutSuccessPage() {
     const sessionId = searchParams.get("session_id");
     
     if (!sessionId) {
-      router.push("/");
+      setError("Missing payment information. Please contact customer support.");
+      setLoading(false);
       return;
     }
     
@@ -28,6 +29,11 @@ export default function CheckoutSuccessPage() {
       try {
         // Call the API to process the successful payment
         const orderData = await apiClient(`/checkout/success?session_id=${sessionId}`);
+        
+        if (!orderData || !orderData.id) {
+          throw new Error("Invalid order data received");
+        }
+        
         setOrder(orderData);
         
         // Clear the cart after successful payment
@@ -41,14 +47,7 @@ export default function CheckoutSuccessPage() {
     };
     
     processPayment();
-    
-    // Redirect to homepage after 5 seconds
-    const timeout = setTimeout(() => {
-      router.push("/");
-    }, 5000);
-    
-    return () => clearTimeout(timeout);
-  }, [router, searchParams, clearCart]);
+  }, [searchParams, clearCart]);
 
   if (loading) {
     return (

@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,11 +9,17 @@ import {
   updateCartItem,
   removeCartItem,
   clearCart as clearCartApi,
-  createCartSession,
+  mergeCart,
 } from "@/lib/api/cart";
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/store/store";
+
+// Add a static flag to track merge status across component instances
+let globalMergeStatus = {
+  inProgress: false,
+  completed: false,
+};
 
 export function useCart() {
   const dispatch = useDispatch();
@@ -24,6 +29,9 @@ export function useCart() {
   const [error, setError] = useState<Error | null>(null);
   const mergedRef = useRef(false);
 
+  // Use a ref to track merge status for this component instance
+  const mergeStatusRef = useRef(globalMergeStatus);
+  
   // Helper function to standardize cart item mapping
   const mapCartItems = (serverCart) => {
     return serverCart.items.map((item) => ({
@@ -48,37 +56,12 @@ export function useCart() {
     );
   };
 
-  // Initialize session if needed
-  useEffect(() => {
-    const initializeSession = async () => {
-      // Check if we have a session cookie already
-      // We don't need to check the value, the backend will do that
-      if (!document.cookie.includes('cart_session_id')) {
-        setIsLoading(true);
-        try {
-          await createCartSession();
-          console.log("Created new cart session");
-        } catch (err) {
-          console.error("Failed to create cart session:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initializeSession();
-  }, []);
-
   // Fetch cart from Redis on initial load and when user auth changes
   useEffect(() => {
     const fetchCart = async () => {
       setIsLoading(true);
       try {
-        // Ensure we have a session before fetching cart
-        if (!document.cookie.includes('cart_session_id')) {
-          await createCartSession();
-        }
-        
+        // The backend will create a session if needed
         const serverCart = await getCart();
         updateReduxCart(serverCart);
       } catch (err) {
@@ -99,32 +82,55 @@ export function useCart() {
     return () => clearTimeout(refreshTimeout);
   }, [dispatch, user?.id]);
 
+  // Function to handle cart merging with locking mechanism
+  const handleCartMerge = async () => {
+    // If merge is already completed or in progress, don't proceed
+    if (mergeStatusRef.current.completed || mergeStatusRef.current.inProgress) {
+      return;
+    }
+    
+    try {
+      // Set global flag to prevent other instances from starting a merge
+      mergeStatusRef.current.inProgress = true;
+      globalMergeStatus.inProgress = true;
+      
+      setIsLoading(true);
+      
+      // Attempt to merge carts
+      await mergeCart();
+      
+      // Fetch the updated cart
+      const mergedCart = await getCart();
+      updateReduxCart(mergedCart);
+      
+      // Mark merge as completed globally
+      mergeStatusRef.current.completed = true;
+      globalMergeStatus.completed = true;
+      
+      console.log("Cart merge successful");
+    } catch (err) {
+      console.error("Failed to merge carts:", err);
+    } finally {
+      // Reset in-progress flag
+      mergeStatusRef.current.inProgress = false;
+      globalMergeStatus.inProgress = false;
+      setIsLoading(false);
+    }
+  };
+
   // When user logs in, merge their guest cart with their user cart
   useEffect(() => {
-    const mergeCartsAfterLogin = async () => {
-      if (user?.id && !mergedRef.current) {
-        try {
-          setIsLoading(true);
-          await apiClient("/cart/merge", {
-            method: "POST",
-            requireAuth: true
-          });
-          
-          mergedRef.current = true; // Mark as merged
-          
-          const mergedCart = await getCart();
-          updateReduxCart(mergedCart);
-          console.log("Cart merge successful");
-        } catch (err) {
-          console.error("Failed to merge carts:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
+    if (user?.id && !mergeStatusRef.current.completed) {
+      handleCartMerge();
+    }
+  }, [user?.id]);
 
-    mergeCartsAfterLogin();
-  }, [user?.id, dispatch]);
+  // Export the merge function so it can be called from AuthContext
+  const triggerCartMerge = () => {
+    if (user?.id) {
+      handleCartMerge();
+    }
+  };
 
   const handleApiError = (error: any, defaultMessage: string) => {
     // Extract error message from API response if available
@@ -146,7 +152,6 @@ export function useCart() {
     setError(null);
 
     try {
-      // No need to check for sessionId, the cookie will be sent automatically
       const updatedCart = await addToCart(product.id, quantity);
       updateReduxCart(updatedCart);
       return updatedCart;
@@ -222,19 +227,21 @@ export function useCart() {
         paymentMethod
       };
 
+      // Use the createCheckoutSession function from our API
       const response = await apiClient("/checkout", {
         method: "POST",
         body: checkoutData,
         requireAuth: !!user?.id,
       });
 
+      // If we get a URL back, it's for Stripe checkout
       if (response.url) {
-        window.location.href = response.url;
-        return null;
+        return response; // Return the response so the checkout page can handle the redirect
       }
 
+      // If we get here, the order was processed directly
       await clearCart();
-      return response;
+      return response; // Return the order data
     } catch (error) {
       handleApiError(error, "Checkout failed");
       throw error;
@@ -257,5 +264,7 @@ export function useCart() {
     removeItem,
     clearCart,
     checkout,
+    triggerCartMerge, // Export the function
   };
 }
+

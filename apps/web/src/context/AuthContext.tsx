@@ -9,6 +9,13 @@ import React, {
 } from "react";
 import { apiClient, setAuthToken } from "@/lib/api/client";
 
+// Create a context for cart merge triggering
+const CartMergeContext = createContext<{ triggerMerge: () => void } | undefined>(undefined);
+
+export function useCartMerge() {
+  return useContext(CartMergeContext);
+}
+
 type User = {
   id: string;
   email: string;
@@ -38,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cartMergeTrigger, setCartMergeTrigger] = useState<(() => void) | null>(null);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -110,11 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set user in state
       setUser(response.user);
 
-      // Force cart refresh after login
-      await apiClient("/cart/merge", {
-        method: "POST",
-        requireAuth: true,
-      });
+      // Trigger cart merge if function is available
+      if (typeof cartMergeTrigger === 'function') {
+        cartMergeTrigger();
+      }
 
       return response;
     } catch (error) {
@@ -186,7 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{ user, isLoading, error, login, register, logout, clearError }}
     >
-      {children}
+      <CartMergeContext.Provider value={{ triggerMerge: cartMergeTrigger }}>
+        {children}
+      </CartMergeContext.Provider>
     </AuthContext.Provider>
   );
 }

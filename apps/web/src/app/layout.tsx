@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { CartMergeProvider } from "@/providers/CartMergeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,13 +21,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers> {/* Redux provider */}
+        <Providers>
+          {" "}
+          {/* Redux provider */}
           <AuthProvider>
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </div>
+            <CartMergeProvider>
+              <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+              </div>
+            </CartMergeProvider>
           </AuthProvider>
         </Providers>
       </body>

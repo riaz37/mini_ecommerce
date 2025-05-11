@@ -1,63 +1,57 @@
 import { apiClient } from "./client";
+import { Cart } from "@/lib/types";
 
-export interface CartItem {
-  productId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-}
-
-export interface Cart {
-  items: CartItem[];
-  subtotal: number;
-  tax: number;
-  total: number;
-}
-
-// Create a new cart session
+// Create a cart session
 export async function createCartSession(): Promise<{ sessionId: string }> {
-  return await apiClient("/cart/session", {
-    method: "POST",
-  });
+  return await apiClient("/cart/session", { method: "POST" });
 }
 
+// Get cart contents
 export async function getCart(): Promise<Cart> {
-  // Never require auth for cart operations - we'll send the auth token if available
-  return await apiClient(`/cart`);
+  // Let the backend handle session creation if needed
+  return await apiClient("/cart");
 }
 
+// Add item to cart
 export async function addToCart(
   productId: string,
-  quantity: number,
-) {
+  quantity: number
+): Promise<Cart> {
   return await apiClient("/cart/add", {
     method: "POST",
     body: { productId, quantity },
   });
 }
 
+// Update cart item quantity
 export async function updateCartItem(
   productId: string,
-  quantity: number,
-) {
+  quantity: number
+): Promise<Cart> {
   return await apiClient(`/cart/items/${productId}`, {
     method: "PUT",
     body: { quantity },
   });
 }
 
-export async function removeCartItem(
-  productId: string,
-) {
+// Remove item from cart
+export async function removeCartItem(productId: string): Promise<Cart> {
   return await apiClient(`/cart/items/${productId}`, {
     method: "DELETE",
   });
 }
 
-export async function clearCart() {
-  return await apiClient(`/cart`, {
+// Clear entire cart
+export async function clearCart(): Promise<void> {
+  return await apiClient("/cart/clear", {
     method: "DELETE",
   });
 }
 
+// Merge guest cart with user cart after login
+export async function mergeCart(): Promise<Cart> {
+  return await apiClient("/cart/merge", {
+    method: "POST",
+    requireAuth: true,
+  });
+}
