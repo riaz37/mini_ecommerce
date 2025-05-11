@@ -36,21 +36,17 @@ export const customerSchema = z.object({
 // Checkout validations
 export const checkoutSchema = z.object({
   shippingAddress: z.object({
-    fullName: z.string().min(1, { message: "Full name is required" }),
-    address1: z.string().min(1, { message: "Address is required" }),
-    address2: z.string().optional(),
+    street: z.string().min(1, { message: "Street address is required" }),
     city: z.string().min(1, { message: "City is required" }),
     state: z.string().min(1, { message: "State is required" }),
     postalCode: z.string().min(1, { message: "Postal code is required" }),
     country: z.string().min(1, { message: "Country is required" }),
-    phone: z.string().min(1, { message: "Phone number is required" }),
   }),
   paymentMethod: z.object({
-    type: z.enum(["credit_card", "paypal", "bank_transfer"], {
-      required_error: "Payment method is required",
+    type: z.enum(["credit_card"], {
+      required_error: "Please select a payment method",
     }),
-    // We'll handle payment details on the backend or through a redirect
-    details: z.any().optional(),
+    details: z.record(z.any()).optional(),
   }),
 });
 

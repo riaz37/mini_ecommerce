@@ -64,7 +64,7 @@ export default function CartSummary() {
             <button
               onClick={handleClearCart}
               disabled={isClearing || cart.items.length === 0}
-              className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
             >
               {isClearing ? (
                 <LoadingSpinner size="sm" color="white" text="Clearing..." />

@@ -53,10 +53,10 @@ export class AddressDto {
 }
 
 export class CheckoutDto {
-  @ApiProperty({ description: 'Session ID for the cart' })
+  @ApiPropertyOptional({ description: 'Session ID for the cart' })
   @IsString()
-  @IsNotEmpty()
-  sessionId: string;
+  @IsOptional()
+  sessionId?: string;
 
   @ApiPropertyOptional({ description: 'Customer ID if available' })
   @IsString()

@@ -201,15 +201,24 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Cart cleared' })
   @Delete('cart')
   async clearCart(@Req() request: Request) {
-    const sessionId = (request as unknown as ExpressRequest).cookies[
-      'cart_session_id'
-    ];
+    try {
+      const sessionId = (request as unknown as ExpressRequest).cookies[
+        'cart_session_id'
+      ];
 
-    if (!sessionId) {
-      throw new BadRequestException('No cart session found');
+      if (!sessionId) {
+        throw new BadRequestException('No cart session found');
+      }
+
+      console.log(`Clearing cart for session: ${sessionId}`);
+      const result = await this.ordersService.clearCart(sessionId);
+      console.log('Cart cleared successfully:', result);
+      
+      return result;
+    } catch (error) {
+      console.error('Error in clearCart controller:', error);
+      throw error;
     }
-
-    return this.ordersService.clearCart(sessionId);
   }
 
   @ApiOperation({ summary: 'Merge guest cart with user cart' })

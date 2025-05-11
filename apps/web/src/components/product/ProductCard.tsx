@@ -59,7 +59,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             onClick={handleAddToCart}
             disabled={isAddingToCart || !product.inStock}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-md disabled:bg-blue-400 flex items-center justify-center min-w-[80px]"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-md disabled:bg-blue-400 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center min-w-[80px]"
           >
             {isAddingToCart ? (
               <LoadingSpinner size="xs" color="white" />

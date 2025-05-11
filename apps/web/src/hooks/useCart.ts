@@ -200,34 +200,45 @@ export function useCart() {
     setError(null);
     
     try {
-      await clearCartApi();
-      dispatch(
-        hydrateCart({
-          items: [],
-          subtotal: 0,
-          tax: 0,
-          total: 0,
-        })
-      );
+      const emptyCart = await clearCartApi();
+      
+      // Make sure we have a complete cart object
+      const normalizedCart = {
+        items: emptyCart.items || [],
+        subtotal: emptyCart.subtotal || 0,
+        tax: emptyCart.tax || 0,
+        total: emptyCart.total || 0
+      };
+      
+      dispatch(hydrateCart(normalizedCart));
+      return normalizedCart;
     } catch (error) {
       handleApiError(error, "Failed to clear cart");
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const checkout = async (shippingAddress, paymentMethod) => {
+  const checkout = async (shippingAddress: ShippingAddress, paymentMethod: PaymentMethod) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Prepare checkout data according to backend expectations
+      // The backend expects sessionId to be a string, not undefined
       const checkoutData = {
-        ...(user?.id && { customerId: user.id }),
+        // Don't set sessionId to undefined - the backend will get it from cookies
+        // but we need to include it in the request body
+        customerId: user?.id,
         shippingAddress,
-        paymentMethod
+        paymentMethod: {
+          type: paymentMethod.type,
+          details: paymentMethod.details || {}
+        }
       };
 
-      // Use the createCheckoutSession function from our API
+      // Use the API client to make the request
       const response = await apiClient("/checkout", {
         method: "POST",
         body: checkoutData,

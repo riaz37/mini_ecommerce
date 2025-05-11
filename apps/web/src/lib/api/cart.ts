@@ -42,8 +42,8 @@ export async function removeCartItem(productId: string): Promise<Cart> {
 }
 
 // Clear entire cart
-export async function clearCart(): Promise<void> {
-  return await apiClient("/cart/clear", {
+export async function clearCart() {
+  return await apiClient(`/cart`, {
     method: "DELETE",
   });
 }

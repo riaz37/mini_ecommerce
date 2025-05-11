@@ -20,24 +20,26 @@ export default function CheckoutSuccessPage() {
     const sessionId = searchParams.get("session_id");
     
     if (!sessionId) {
-      setError("Missing payment information. Please contact customer support.");
-      setLoading(false);
+      router.push("/");
       return;
     }
     
     const processPayment = async () => {
       try {
+        setLoading(true);
+        
         // Call the API to process the successful payment
+        // The backend expects the session_id as a query parameter
         const orderData = await apiClient(`/checkout/success?session_id=${sessionId}`);
         
-        if (!orderData || !orderData.id) {
-          throw new Error("Invalid order data received");
+        if (orderData) {
+          setOrder(orderData);
+          
+          // Clear the cart after successful payment
+          await clearCart();
+        } else {
+          throw new Error("No order data received");
         }
-        
-        setOrder(orderData);
-        
-        // Clear the cart after successful payment
-        clearCart();
       } catch (err) {
         console.error("Error processing payment:", err);
         setError("Failed to process payment. Please contact customer support.");
@@ -47,7 +49,7 @@ export default function CheckoutSuccessPage() {
     };
     
     processPayment();
-  }, [searchParams, clearCart]);
+  }, [router, searchParams, clearCart]);
 
   if (loading) {
     return (

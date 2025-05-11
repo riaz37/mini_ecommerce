@@ -139,19 +139,12 @@ export default function CartPage() {
             <div className="mt-6">
               <Link
                 href="/checkout"
-                className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-md font-medium block text-center transition-all duration-200 ${
-                  isLoading ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg transform hover:-translate-y-1"
+                className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-md font-medium block text-center cursor-pointer ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 onClick={(e) => isLoading && e.preventDefault()}
               >
-                {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <LoadingSpinner size="sm" color="white" />
-                    <span className="ml-2">Processing...</span>
-                  </span>
-                ) : (
-                  "Proceed to Checkout"
-                )}
+                Proceed to Checkout
               </Link>
             </div>
             

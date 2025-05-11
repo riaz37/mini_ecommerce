@@ -65,14 +65,11 @@ export default function CheckoutPage() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       shippingAddress: {
-        fullName: "",
-        address1: "",
-        address2: "",
+        street: "",
         city: "",
         state: "",
         postalCode: "",
         country: "",
-        phone: "",
       },
       paymentMethod: {
         type: "credit_card",
@@ -90,10 +87,16 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
+      // Prepare payment method in the format expected by backend
+      const paymentMethod = {
+        type: data.paymentMethod.type,
+        details: {} // Backend doesn't expect details for initial checkout
+      };
+
       // Use the checkout function from useCart hook
       const result = await checkout(
         data.shippingAddress as ShippingAddress,
-        data.paymentMethod as PaymentMethod
+        paymentMethod as PaymentMethod
       );
 
       // If we get a URL back, it's a redirect to Stripe
@@ -107,8 +110,6 @@ export default function CheckoutPage() {
         router.push(`/order-confirmation/${result.id}`);
         return;
       }
-
-      // If we don't have a result, assume redirect happened in checkout function
     } catch (err) {
       console.error("Checkout error:", err);
       setError("Failed to process payment. Please try again.");
@@ -211,11 +212,11 @@ export default function CheckoutPage() {
                   <div className="col-span-2">
                     <FormField
                       control={form.control}
-                      name="shippingAddress.address1"
+                      name="shippingAddress.street"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-700">
-                            Address Line 1
+                            Street Address
                           </FormLabel>
                           <FormControl>
                             <Input

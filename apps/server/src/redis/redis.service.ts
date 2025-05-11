@@ -11,13 +11,21 @@ export class RedisService implements OnModuleInit {
   constructor() {}
 
   async onModuleInit() {
+    // Get Redis URL from environment variables, with Upstash URL as fallback
+    const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || 'redis://localhost:6379';
+    
     this.client = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      url: redisUrl,
+      // Add Upstash specific configuration if needed
+      socket: {
+        reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
+      },
     });
 
     this.client.on('error', (err) => console.error('Redis Client Error', err));
 
     await this.client.connect();
+    console.log('Connected to Redis at:', redisUrl.replace(/:[^:]*@/, ':***@')); // Hide password in logs
   }
 
   async get<T>(key: string): Promise<T | null> {
@@ -69,6 +77,7 @@ export class RedisService implements OnModuleInit {
   async deleteCart(sessionId: string): Promise<number> {
     // Normalize the key format to handle both user and session carts
     const key = sessionId.startsWith('cart:') ? sessionId : `cart:${sessionId}`;
+    console.log(`Deleting cart with key: ${key}`);
     return this.del(key);
   }
 }

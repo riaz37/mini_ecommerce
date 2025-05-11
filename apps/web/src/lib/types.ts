@@ -77,14 +77,11 @@ export interface OrderItem {
 }
 
 export interface ShippingAddress {
-  fullName: string;
-  address1: string;
-  address2?: string;
+  street: string;
   city: string;
   state: string;
   postalCode: string;
   country: string;
-  phone: string;
 }
 
 export interface PaymentMethod {

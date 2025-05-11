@@ -11,18 +11,27 @@ export async function getCategoryById(id: string): Promise<Category> {
 
 export async function getCategoryProducts(
   categoryId: string,
-  options = {}
+  limit?: number,
+  page?: number
 ): Promise<Product[]> {
   const queryParams = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(options)) {
-    if (value !== undefined) {
-      queryParams.append(key, value !== null ? value.toString() : "");
-    }
+  
+  if (limit) {
+    queryParams.append("limit", limit.toString());
   }
-
+  
+  if (page) {
+    queryParams.append("page", page.toString());
+  }
+  
   const queryString = queryParams.toString();
   const endpoint = `/categories/${categoryId}/products${queryString ? `?${queryString}` : ""}`;
-
-  return await apiClient(endpoint);
+  
+  const products = await apiClient(endpoint);
+  
+  // Add inStock property to each product based on stock value
+  return products.map(product => ({
+    ...product,
+    inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0)
+  }));
 }
