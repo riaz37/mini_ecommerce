@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: mini-ecommerce-api
+    env: node
+    buildCommand: cd apps/server && pnpm install && pnpm prisma:generate && pnpm build
+    startCommand: cd apps/server && pnpm start
