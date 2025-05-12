@@ -1,84 +1,198 @@
-# Turborepo starter
+# Mini E-commerce Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A modern, full-stack e-commerce application built with a Turborepo monorepo structure, featuring a Next.js frontend and NestJS backend.
 
-## Using this example
+## Overview
 
-Run the following command:
+This project is a comprehensive e-commerce solution with the following features:
 
-```sh
-npx create-turbo@latest
-```
+- Product browsing and searching
+- Shopping cart functionality
+- User authentication and account management
+- Order processing and checkout
+- Admin dashboard for product and order management
+- RESTful API with Swagger documentation
 
-## What's inside?
+## Tech Stack
 
-This Turborepo includes the following packages/apps:
+### Frontend (apps/web)
+- **Next.js 15** with App Router
+- **React 19** for UI components
+- **Redux Toolkit** for state management
+- **Tailwind CSS** for styling
+- **Shadcn UI** components
 
-### Apps and Packages
+### Backend (apps/server)
+- **NestJS** framework
+- **Prisma** ORM for database access
+- **MySQL** database
+- **Redis** for caching and session management
+- **Swagger** for API documentation
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Shared Packages
+- **@repo/ui**: Shared React component library
+- **@repo/eslint-config**: Shared ESLint configurations
+- **@repo/typescript-config**: Shared TypeScript configurations
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Getting Started
 
-### Utilities
+### Prerequisites
+- Node.js 18 or higher
+- PNPM 9.0.0
+- Docker and Docker Compose (for local development)
 
-This Turborepo has some additional tools already setup for you:
+### Installation
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd mini_ecommerce
+   ```
 
-### Build
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-To build all apps and packages, run the following command:
+3. Start the development environment:
+   ```bash
+   # Start the database services
+   docker-compose up -d
+   
+   # Generate Prisma client
+   cd apps/server
+   pnpm prisma:generate
+   
+   # Run database migrations
+   pnpm prisma:migrate
+   
+   # Seed the database (optional)
+   pnpm prisma:seed
+   
+   # Return to root directory
+   cd ../..
+   
+   # Start all applications
+   pnpm dev
+   ```
 
-```
-cd my-turborepo
-pnpm build
-```
+## Development
 
-### Develop
+### Running in Development Mode
 
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
+```bash
 pnpm dev
 ```
 
-### Remote Caching
+This will start all applications in development mode:
+- Web frontend: http://localhost:3000
+- API server: http://localhost:3001
+- API documentation: http://localhost:3001/api
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+### Building for Production
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+```bash
+pnpm build
+```
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+### Linting
+
+```bash
+pnpm lint
+```
+
+### Type Checking
+
+```bash
+pnpm check-types
+```
+
+## Project Structure
 
 ```
-cd my-turborepo
+mini_ecommerce/
+├── apps/
+│   ├── web/                 # Next.js frontend
+│   │   ├── src/
+│   │   │   ├── app/         # Next.js App Router
+│   │   │   ├── components/  # React components
+│   │   │   ├── hooks/       # Custom React hooks
+│   │   │   ├── lib/         # Utility functions
+│   │   │   └── store/       # Redux store
+│   │   └── public/          # Static assets
+│   └── server/              # NestJS backend
+│       ├── src/
+│       │   ├── modules/     # Feature modules
+│       │   ├── prisma/      # Database schema and migrations
+│       │   └── main.ts      # Application entry point
+├── packages/
+│   ├── ui/                  # Shared UI components
+│   ├── eslint-config/       # Shared ESLint configurations
+│   └── typescript-config/   # Shared TypeScript configurations
+└── turbo.json               # Turborepo configuration
+```
+
+## Features
+
+### Customer Features
+- Browse products by category
+- Search for products
+- View product details and reviews
+- Add products to cart
+- Manage shopping cart
+- Checkout process
+- Order history
+- Account management
+
+### Admin Features
+- Product management
+- Category management
+- Order management
+- Customer management
+- Analytics dashboard
+
+## Docker Support
+
+The project includes Docker Compose configuration for local development:
+
+```bash
+docker-compose up -d
+```
+
+This starts:
+- MySQL database on port 3306
+- Redis on port 6379
+
+## Deployment
+
+The application is designed to be deployed on Vercel:
+
+```bash
+# Deploy the web application
+cd apps/web
+vercel
+
+# Deploy the API server
+cd ../server
+vercel
+```
+
+## Remote Caching
+
+This Turborepo uses Vercel Remote Caching for faster builds:
+
+```bash
 npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
 npx turbo link
 ```
 
-## Useful Links
+## Contributing
 
-Learn more about the power of Turborepo:
+1. Create a feature branch
+2. Make your changes
+3. Run tests and linting
+4. Submit a pull request
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## License
+
+[MIT License](LICENSE)
