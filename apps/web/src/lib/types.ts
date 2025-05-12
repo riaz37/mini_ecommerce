@@ -22,6 +22,7 @@ export interface ProductFilters {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
+  minRating?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   page?: number;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProductFilters } from "@/lib/types";
+import type { ProductFilters } from "@/lib/types";
 import { getCategories } from "@/lib/api/categories";
 
 interface ProductFiltersProps {
@@ -21,7 +21,7 @@ export default function ProductFilters({
     max: filters.maxPrice || 1000,
   });
   const [searchTerm, setSearchTerm] = useState(filters.search || "");
-  const [rating, setRating] = useState(filters.minRating || 0);
+  const [rating, setRating] = useState(filters.minRating ?? 0);
 
   // Fetch categories
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function ProductFilters({
 
   // Handle category change
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateFilters({ category: e.target.value || undefined });
+    updateFilters({ categoryId: e.target.value || undefined });
   };
 
   // Handle rating change
@@ -99,7 +99,7 @@ export default function ProductFilters({
         </label>
         <select
           id="category"
-          value={filters.category || ""}
+          value={filters.categoryId || ""}
           onChange={handleCategoryChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
@@ -170,7 +170,7 @@ export default function ProductFilters({
       <button
         onClick={() => {
           updateFilters({
-            category: undefined,
+            categoryId: undefined,
             minPrice: undefined,
             maxPrice: undefined,
             minRating: undefined,
