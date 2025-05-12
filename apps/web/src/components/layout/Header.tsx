@@ -88,7 +88,7 @@ export default function Header() {
                 >
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none text-gray-900">{user.firstName || 'User'}</p>
+                      <p className="text-sm font-medium leading-none text-gray-900">{user.name || 'User'}</p>
                       <p className="text-xs leading-none text-gray-500">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
