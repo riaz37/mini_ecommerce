@@ -90,7 +90,7 @@ export default function CheckoutPage() {
       // Prepare payment method in the format expected by backend
       const paymentMethod = {
         type: data.paymentMethod.type,
-        details: {} // Backend doesn't expect details for initial checkout
+        details: {}, // Backend doesn't expect details for initial checkout
       };
 
       // Use the checkout function from useCart hook
@@ -190,28 +190,6 @@ export default function CheckoutPage() {
                   <div className="col-span-2">
                     <FormField
                       control={form.control}
-                      name="shippingAddress.fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700">
-                            Full Name
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="John Doe"
-                              {...field}
-                              className="border-gray-200 focus:border-gray-400 focus:ring-gray-400"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <FormField
-                      control={form.control}
                       name="shippingAddress.street"
                       render={({ field }) => (
                         <FormItem>
@@ -221,28 +199,6 @@ export default function CheckoutPage() {
                           <FormControl>
                             <Input
                               placeholder="123 Main St"
-                              {...field}
-                              className="border-gray-200 focus:border-gray-400 focus:ring-gray-400"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <FormField
-                      control={form.control}
-                      name="shippingAddress.address2"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700">
-                            Address Line 2 (Optional)
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Apt 4B"
                               {...field}
                               className="border-gray-200 focus:border-gray-400 focus:ring-gray-400"
                             />
@@ -328,28 +284,6 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-
-                  <div className="col-span-2">
-                    <FormField
-                      control={form.control}
-                      name="shippingAddress.phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700">
-                            Phone Number
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="(555) 123-4567"
-                              {...field}
-                              className="border-gray-200 focus:border-gray-400 focus:ring-gray-400"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
               </div>
 
