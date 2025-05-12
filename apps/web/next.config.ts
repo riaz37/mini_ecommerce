@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: "standalone", // Enables server rendering and API routes
+  reactStrictMode: true,
 };
 
 export default nextConfig;

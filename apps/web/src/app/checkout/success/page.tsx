@@ -8,8 +8,6 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { apiClient } from "@/lib/api/client";
 import { useCart } from "@/hooks/useCart";
 
-export const dynamic = 'force-dynamic';
-
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
