@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 import { Cart } from '../orders/types/cart.types';
 
 @Injectable()
@@ -11,25 +11,21 @@ export class RedisService implements OnModuleInit {
   constructor() {}
 
   async onModuleInit() {
-    const upstashUrl = process.env.UPSTASH_REDIS_URL;
-    const upstashToken = process.env.UPSTASH_REDIS_TOKEN;
+    const redisUrl = process.env.REDIS_URL;
     
-    if (!upstashUrl || !upstashToken) {
-      throw new Error('Upstash Redis credentials are required. Please set UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN environment variables.');
+    if (!redisUrl) {
+      throw new Error('Redis URL is required. Please set REDIS_URL environment variable.');
     }
     
-    this.client = new Redis({
-      url: upstashUrl,
-      token: upstashToken,
-    });
+    this.client = new Redis(redisUrl);
     
-    console.log('Connected to Upstash Redis');
+    console.log('Connected to Redis');
   }
 
   async get<T>(key: string): Promise<T | null> {
     try {
       const value = await this.client.get(key);
-      return value ? (typeof value === 'string' ? JSON.parse(value) as unknown as T : value as T) : null;
+      return value ? (typeof value === 'string' ? JSON.parse(value) as T : value as T) : null;
     } catch (error) {
       console.error('Redis get error:', error);
       return null;
@@ -43,7 +39,11 @@ export class RedisService implements OnModuleInit {
   ): Promise<T> {
     try {
       const jsonValue = JSON.stringify(value);
-      await this.client.set(key, jsonValue, { ex: ttl });
+      if (ttl > 0) {
+        await this.client.setex(key, ttl, jsonValue);
+      } else {
+        await this.client.set(key, jsonValue);
+      }
       return value;
     } catch (error) {
       console.error('Redis set error:', error);
