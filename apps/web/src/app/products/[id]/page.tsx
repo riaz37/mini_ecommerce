@@ -3,17 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import {
-  getProductById,
-  getProductRatings,
-  rateProduct,
-} from "@/lib/api/products";
+import { getProductById, getProductRatings } from "@/lib/api/products";
 import { Product } from "@/lib/types";
 import { useCart } from "@/hooks/useCart";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ratings, setRatings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,8 +121,10 @@ export default function ProductDetail() {
             </div>
 
             <p className="text-3xl font-bold text-gray-900 mb-6">
-              ${typeof product.price === 'number' 
-                ? product.price.toFixed(2) 
+              $
+              {typeof product.price === "number"
+                ? product.price.toFixed(2)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 : parseFloat(product.price as any).toFixed(2)}
             </p>
 

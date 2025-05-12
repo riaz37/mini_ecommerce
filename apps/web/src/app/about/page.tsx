@@ -60,16 +60,16 @@ export default function AboutPage() {
           <h2>Our Values</h2>
           <ul>
             <li><strong>Quality:</strong> We carefully select each product to ensure it meets our high standards.</li>
-            <li><strong>Affordability:</strong> We believe great products shouldn't break the bank.</li>
+            <li><strong>Affordability:</strong> We believe great products shouldn&apos;t break the bank.</li>
             <li><strong>Customer Service:</strong> Your satisfaction is our top priority.</li>
-            <li><strong>Innovation:</strong> We're constantly improving our platform to better serve you.</li>
-            <li><strong>Sustainability:</strong> We're committed to reducing our environmental impact.</li>
+            <li><strong>Innovation:</strong> We&apos;re constantly improving our platform to better serve you.</li>
+            <li><strong>Sustainability:</strong> We&apos;re committed to reducing our environmental impact.</li>
           </ul>
 
           <h2>Our Team</h2>
           <p>
             Our diverse team brings together expertise in retail, technology, logistics, and customer service. 
-            We're united by our commitment to creating the best possible shopping experience for our customers.
+            We&apos;re united by our commitment to creating the best possible shopping experience for our customers.
           </p>
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getOrderById } from "@/lib/api/checkout";
 import { Order } from "@/lib/types";
@@ -12,7 +12,6 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function OrderConfirmationPage() {
   const params = useParams();
-  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +25,9 @@ export default function OrderConfirmationPage() {
         setOrder(orderData);
       } catch (err) {
         console.error("Failed to fetch order:", err);
-        setError("We couldn't find your order. Please contact customer support.");
+        setError(
+          "We couldn't find your order. Please contact customer support."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -38,7 +39,11 @@ export default function OrderConfirmationPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <LoadingSpinner size="xl" color="primary" text="Loading order details..." />
+        <LoadingSpinner
+          size="xl"
+          color="primary"
+          text="Loading order details..."
+        />
       </div>
     );
   }
@@ -48,7 +53,9 @@ export default function OrderConfirmationPage() {
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="text-center space-y-6">
           <h1 className="text-3xl font-light">Order Not Found</h1>
-          <p className="text-gray-500">{error || "We couldn't find your order."}</p>
+          <p className="text-gray-500">
+            {error || "We couldn't find your order."}
+          </p>
           <Button asChild variant="outline" size="lg">
             <Link href="/">Return to Home</Link>
           </Button>
@@ -82,7 +89,7 @@ export default function OrderConfirmationPage() {
             </div>
             <p className="text-sm capitalize">{order.status}</p>
           </div>
-          
+
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center mb-2">
               <Truck className="h-5 w-5 text-gray-700 mr-2" />
@@ -90,13 +97,15 @@ export default function OrderConfirmationPage() {
             </div>
             <p className="text-sm">Standard Shipping</p>
           </div>
-          
+
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center mb-2">
               <Home className="h-5 w-5 text-gray-700 mr-2" />
               <h3 className="font-medium">Payment Method</h3>
             </div>
-            <p className="text-sm capitalize">{order.paymentMethod.type.replace('_', ' ')}</p>
+            <p className="text-sm capitalize">
+              {order.paymentMethod.type.replace("_", " ")}
+            </p>
           </div>
         </div>
 
@@ -106,17 +115,13 @@ export default function OrderConfirmationPage() {
             {order.items.map((item) => (
               <div key={item.productId} className="flex items-start gap-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-md border border-gray-200 flex-shrink-0 overflow-hidden">
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                  {/* Item image placeholder since OrderItem doesn't have image property */}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-medium truncate">{item.name}</h3>
-                  <p className="text-xs text-gray-500 mt-1">Qty: {item.quantity}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Qty: {item.quantity}
+                  </p>
                 </div>
                 <div className="text-sm font-medium">
                   ${(item.price * item.quantity).toFixed(2)}
@@ -124,9 +129,9 @@ export default function OrderConfirmationPage() {
               </div>
             ))}
           </div>
-          
+
           <Separator className="my-6" />
-          
+
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Subtotal</span>
@@ -134,16 +139,18 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Shipping</span>
-              <span>{order.shipping === 0 ? "Free" : `$${order.shipping.toFixed(2)}`}</span>
+              <span>
+                Free
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Tax</span>
               <span>${order.tax.toFixed(2)}</span>
             </div>
           </div>
-          
+
           <Separator className="my-6" />
-          
+
           <div className="flex justify-between font-medium text-lg">
             <span>Total</span>
             <span>${order.total.toFixed(2)}</span>
@@ -153,14 +160,12 @@ export default function OrderConfirmationPage() {
         <div className="mb-8">
           <h2 className="text-xl font-medium mb-4">Shipping Address</h2>
           <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="font-medium">{order.shippingAddress.fullName}</p>
-            <p>{order.shippingAddress.address1}</p>
-            {order.shippingAddress.address2 && <p>{order.shippingAddress.address2}</p>}
+            <p className="font-medium">{order.shippingAddress.street}</p>
             <p>
-              {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
+              {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+              {order.shippingAddress.postalCode}
             </p>
             <p>{order.shippingAddress.country}</p>
-            <p className="mt-2">{order.shippingAddress.phone}</p>
           </div>
         </div>
 

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
 import CartItem from "@/components/cart/CartItem";
 import CartSummary from "@/components/cart/CartSummary";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Skeleton from "@/components/ui/Skeleton";
 import { ShoppingCart, ShoppingBag, AlertCircle } from "lucide-react";
 
@@ -61,7 +60,7 @@ export default function CartPage() {
           </div>
           <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            Looks like you haven't added anything to your cart yet. Browse our products and find something you'll love!
+            Looks like you haven&apos;t added anything to your cart yet. Browse our products and find something you&apos;ll love!
           </p>
           <Link
             href="/products"

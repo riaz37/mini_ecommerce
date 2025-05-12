@@ -46,13 +46,13 @@ export interface User {
   lastName: string;
   email: string;
   role: "USER" | "ADMIN";
-  customerId?: string; // Optional because not all users are customers
+  customerId?: string;
 }
 
 // Cart types
 export interface CartItem {
   productId: string;
-  id: string; // Same as productId for compatibility
+  id: string; 
   name: string;
   price: number;
   quantity: number;

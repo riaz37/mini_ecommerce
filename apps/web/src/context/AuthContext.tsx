@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{ user, isLoading, error, login, register, logout, clearError }}
     >
-      <CartMergeContext.Provider value={{ triggerMerge: cartMergeTrigger }}>
+      <CartMergeContext.Provider value={{ triggerMerge: cartMergeTrigger || (() => {}) }}>
         {children}
       </CartMergeContext.Provider>
     </AuthContext.Provider>

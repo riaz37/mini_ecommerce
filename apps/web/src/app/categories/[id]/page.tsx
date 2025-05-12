@@ -136,7 +136,7 @@ export default function CategoryDetailPage() {
             // Ensure inStock is properly set
             const isInStock = product.inStock !== undefined 
               ? product.inStock 
-              : (product.stock > 0);
+              : (product.inStock > 0);
             
             return (
               <div

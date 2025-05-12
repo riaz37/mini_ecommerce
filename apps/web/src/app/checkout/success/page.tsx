@@ -13,28 +13,29 @@ export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [order, setOrder] = useState<any>(null);
   const { clearCart } = useCart();
-  
+
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
-    
+
     if (!sessionId) {
       router.push("/");
       return;
     }
-    
+
     const processPayment = async () => {
       try {
         setLoading(true);
-        
-        // Call the API to process the successful payment
-        // The backend expects the session_id as a query parameter
-        const orderData = await apiClient(`/checkout/success?session_id=${sessionId}`);
-        
+
+        const orderData = await apiClient(
+          `/checkout/success?session_id=${sessionId}`
+        );
+
         if (orderData) {
           setOrder(orderData);
-          
+
           // Clear the cart after successful payment
           await clearCart();
         } else {
@@ -47,14 +48,18 @@ export default function CheckoutSuccessPage() {
         setLoading(false);
       }
     };
-    
+
     processPayment();
   }, [router, searchParams, clearCart]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <LoadingSpinner size="xl" color="primary" text="Processing your payment..." />
+        <LoadingSpinner
+          size="xl"
+          color="primary"
+          text="Processing your payment..."
+        />
       </div>
     );
   }
@@ -85,7 +90,9 @@ export default function CheckoutSuccessPage() {
           <div className="mb-6 text-left bg-gray-50 p-4 rounded-lg">
             <h2 className="font-medium mb-2">Order Details</h2>
             <p className="text-sm text-gray-600">Order ID: {order.id}</p>
-            <p className="text-sm text-gray-600">Total: ${order.total.toFixed(2)}</p>
+            <p className="text-sm text-gray-600">
+              Total: ${order.total.toFixed(2)}
+            </p>
           </div>
         )}
         <p className="text-gray-500 text-sm mb-6">

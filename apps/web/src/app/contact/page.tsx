@@ -24,7 +24,6 @@ export default function ContactPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // Initialize form
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -40,18 +39,12 @@ export default function ContactPage() {
     setSubmitError("");
 
     try {
-      // In a real app, you would send this data to your API
-      // await apiClient("/contact", { method: "POST", body: data });
-
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setSubmitSuccess(true);
       form.reset();
     } catch (error) {
-      setSubmitError(
-        "There was a problem submitting your message. Please try again."
-      );
+      setSubmitError(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,8 +82,8 @@ export default function ContactPage() {
           <div>
             <div className="prose prose-lg max-w-none mb-8">
               <p>
-                We'd love to hear from you! Whether you have a question about
-                our products, need help with an order, or want to provide
+                We&apos;d love to hear from you! Whether you have a question
+                about our products, need help with an order, or want to provide
                 feedback, our team is here to assist you.
               </p>
             </div>
@@ -206,8 +199,8 @@ export default function ContactPage() {
                     </h3>
                     <div className="mt-2 text-green-700">
                       <p>
-                        Thank you for contacting us. We'll get back to you as
-                        soon as possible.
+                        Thank you for contacting us. We&apos;ll get back to you
+                        as soon as possible.
                       </p>
                     </div>
                     <div className="mt-4">
@@ -341,9 +334,9 @@ export default function ContactPage() {
               How can I track my order?
             </h3>
             <p className="text-gray-600">
-              Once your order ships, you'll receive a tracking number via email.
-              You can use this number to track your package on our website or
-              directly through the carrier's site.
+              Once your order ships, you&apos;ll receive a tracking number via
+              email. You can use this number to track your package on our
+              website or directly through the carrier&apos;s site.
             </p>
           </div>
 
@@ -384,7 +377,7 @@ export default function ContactPage() {
 
         <div className="text-center mt-10">
           <p className="text-gray-600 mb-4">
-            Didn't find what you're looking for?
+            Didn&apos;t find what you&apos;re looking for?
           </p>
           <Link
             href="/faq"

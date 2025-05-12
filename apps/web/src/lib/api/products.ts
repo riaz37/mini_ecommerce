@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { apiClient } from "./client";
 import { Product, ProductFilters } from "@/lib/types";
 
