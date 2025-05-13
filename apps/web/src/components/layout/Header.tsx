@@ -4,7 +4,14 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/hooks/useCart";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
 
@@ -31,10 +38,16 @@ export default function Header() {
             <Link href="/" className="text-gray-700 hover:text-blue-600">
               Home
             </Link>
-            <Link href="/products" className="text-gray-700 hover:text-blue-600">
+            <Link
+              href="/products"
+              className="text-gray-700 hover:text-blue-600"
+            >
               Products
             </Link>
-            <Link href="/categories" className="text-gray-700 hover:text-blue-600">
+            <Link
+              href="/categories"
+              className="text-gray-700 hover:text-blue-600"
+            >
               Categories
             </Link>
             <Link href="/about" className="text-gray-700 hover:text-blue-600">
@@ -48,22 +61,22 @@ export default function Header() {
           {/* User Actions */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Cart */}
-            <Link 
-              href="/cart" 
+            <Link
+              href="/cart"
               className="text-gray-700 hover:text-blue-600 relative"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-6 w-6" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
               {cart.items.length > 0 && (
@@ -82,14 +95,18 @@ export default function Header() {
                     <span className="sr-only">User menu</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
+                <DropdownMenuContent
+                  align="end"
                   className="w-56 bg-white border border-gray-200 shadow-md"
                 >
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none text-gray-900">{user.name || 'User'}</p>
-                      <p className="text-xs leading-none text-gray-500">{user.email}</p>
+                      <p className="text-sm font-medium leading-none text-gray-900">
+                        {user.name || "User"}
+                      </p>
+                      <p className="text-xs leading-none text-gray-500">
+                        {user.email}
+                      </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-gray-200" />
@@ -109,7 +126,7 @@ export default function Header() {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator className="bg-gray-200" />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={logout}
                     className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
@@ -120,14 +137,14 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex space-x-4">
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="text-gray-700 hover:text-blue-600"
                 >
                   Login
                 </Link>
-                <Link 
-                  href="/register" 
+                <Link
+                  href="/register"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Register
@@ -137,30 +154,30 @@ export default function Header() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden text-gray-700"
             onClick={toggleMobileMenu}
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-6 w-6" 
-              fill="none" 
-              viewBox="0 0 24 24" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
               stroke="currentColor"
             >
               {mobileMenuOpen ? (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
                 />
               ) : (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M4 6h16M4 12h16M4 18h16" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
                 />
               )}
             </svg>
@@ -171,80 +188,80 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="text-gray-700 hover:text-blue-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Home
               </Link>
-              <Link 
-                href="/products" 
+              <Link
+                href="/products"
                 className="text-gray-700 hover:text-blue-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Products
               </Link>
-              <Link 
-                href="/categories" 
+              <Link
+                href="/categories"
                 className="text-gray-700 hover:text-blue-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Categories
               </Link>
-              <Link 
-                href="/about" 
+              <Link
+                href="/about"
                 className="text-gray-700 hover:text-blue-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 About
               </Link>
-              <Link 
-                href="/contact" 
+              <Link
+                href="/contact"
                 className="text-gray-700 hover:text-blue-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Contact
               </Link>
-              <Link 
-                href="/cart" 
+              <Link
+                href="/cart"
                 className="text-gray-700 hover:text-blue-600 flex items-center"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 mr-1" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
                 Cart {cart.items.length > 0 && `(${cart.items.length})`}
               </Link>
-              
+
               {user ? (
                 <>
-                  <Link 
-                    href="/account" 
+                  <Link
+                    href="/account"
                     className="text-gray-700 hover:text-blue-600"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     My Account
                   </Link>
-                  <Link 
-                    href="/orders" 
+                  <Link
+                    href="/orders"
                     className="text-gray-700 hover:text-blue-600"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     My Orders
                   </Link>
-                  <button 
+                  <button
                     onClick={() => {
                       logout();
                       setMobileMenuOpen(false);
@@ -256,15 +273,15 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <Link 
-                    href="/login" 
+                  <Link
+                    href="/login"
                     className="text-gray-700 hover:text-blue-600"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Login
                   </Link>
-                  <Link 
-                    href="/register" 
+                  <Link
+                    href="/register"
                     className="text-gray-700 hover:text-blue-600"
                     onClick={() => setMobileMenuOpen(false)}
                   >

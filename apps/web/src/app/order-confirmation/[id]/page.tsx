@@ -26,7 +26,7 @@ export default function OrderConfirmationPage() {
       } catch (err) {
         console.error("Failed to fetch order:", err);
         setError(
-          "We couldn't find your order. Please contact customer support."
+          "We couldn't find your order. Please contact customer support.",
         );
       } finally {
         setIsLoading(false);
@@ -139,9 +139,7 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Shipping</span>
-              <span>
-                Free
-              </span>
+              <span>Free</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Tax</span>

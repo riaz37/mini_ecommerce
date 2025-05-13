@@ -12,7 +12,7 @@ export default function CategoryDetailPage() {
   const params = useParams();
   const categoryId = params.id as string;
   const { addItem } = useCart();
-  
+
   const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,9 +46,9 @@ export default function CategoryDetailPage() {
   const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    setAddingToCart(prev => ({ ...prev, [product.id]: true }));
-    
+
+    setAddingToCart((prev) => ({ ...prev, [product.id]: true }));
+
     try {
       await addItem(product, 1);
       // Success is handled by the cart context
@@ -56,7 +56,7 @@ export default function CategoryDetailPage() {
       console.error("Error adding to cart:", err);
       // Error is handled by the cart context
     } finally {
-      setAddingToCart(prev => ({ ...prev, [product.id]: false }));
+      setAddingToCart((prev) => ({ ...prev, [product.id]: false }));
     }
   };
 
@@ -94,7 +94,8 @@ export default function CategoryDetailPage() {
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <h1 className="text-2xl font-bold mb-4">Category Not Found</h1>
         <p className="mb-4">
-          The category you&apos;re looking for doesn&apos;t exist or has been removed.
+          The category you&apos;re looking for doesn&apos;t exist or has been
+          removed.
         </p>
         <Link href="/" className="text-blue-600 hover:text-blue-800">
           Return to Home
@@ -134,16 +135,20 @@ export default function CategoryDetailPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products.map((product) => {
             // Ensure inStock is properly set
-            const isInStock = product.inStock !== undefined 
-              ? product.inStock 
-              : (product.inStock > 0);
-            
+            const isInStock =
+              product.inStock !== undefined
+                ? product.inStock
+                : product.inStock > 0;
+
             return (
               <div
                 key={product.id}
                 className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                <Link href={`/products/${product.id}`} className="cursor-pointer">
+                <Link
+                  href={`/products/${product.id}`}
+                  className="cursor-pointer"
+                >
                   <div className="aspect-video bg-gray-200 relative">
                     {product.images && product.images.length > 0 ? (
                       <img
@@ -169,11 +174,12 @@ export default function CategoryDetailPage() {
                   </p>
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-lg">
-                      ${typeof product.price === 'number' 
-                        ? product.price.toFixed(2) 
+                      $
+                      {typeof product.price === "number"
+                        ? product.price.toFixed(2)
                         : parseFloat(product.price).toFixed(2)}
                     </span>
-                    <button 
+                    <button
                       onClick={(e) => handleAddToCart(product, e)}
                       disabled={addingToCart[product.id] || !isInStock}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm disabled:bg-blue-400 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center min-w-[80px]"

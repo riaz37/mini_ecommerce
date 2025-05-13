@@ -60,7 +60,8 @@ export default function CartPage() {
           </div>
           <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            Looks like you haven&apos;t added anything to your cart yet. Browse our products and find something you&apos;ll love!
+            Looks like you haven&apos;t added anything to your cart yet. Browse
+            our products and find something you&apos;ll love!
           </p>
           <Link
             href="/products"
@@ -77,7 +78,8 @@ export default function CartPage() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 flex items-center">
         <ShoppingCart className="mr-3 h-8 w-8 text-blue-600" />
-        Your Cart ({cart.items.length} {cart.items.length === 1 ? 'item' : 'items'})
+        Your Cart ({cart.items.length}{" "}
+        {cart.items.length === 1 ? "item" : "items"})
       </h1>
 
       {error && (
@@ -99,30 +101,30 @@ export default function CartPage() {
             <div className="p-6 bg-gray-50 border-b border-gray-200">
               <h2 className="text-xl font-semibold">Cart Items</h2>
             </div>
-            
+
             <div className="divide-y divide-gray-200">
               {cart.items.map((item) => (
                 <CartItem key={item.productId} item={item} />
               ))}
             </div>
-            
+
             <div className="p-6 bg-gray-50 border-t border-gray-200">
               <Link
                 href="/products"
                 className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-4 w-4 mr-2" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   />
                 </svg>
                 Continue Shopping
@@ -146,21 +148,21 @@ export default function CartPage() {
                 Proceed to Checkout
               </Link>
             </div>
-            
+
             <div className="mt-6 bg-blue-50 rounded-lg p-4 text-sm text-blue-800">
               <div className="flex items-start">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 mr-2 text-blue-600 mt-0.5" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2 text-blue-600 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
                 <div>

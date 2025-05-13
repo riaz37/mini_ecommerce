@@ -1,6 +1,18 @@
-import { Controller, Get, Param, NotFoundException, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  NotFoundException,
+  Query,
+} from '@nestjs/common';
 import { CategoriesService } from './categories.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -27,8 +39,16 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Return products in the category' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiParam({ name: 'id', description: 'Category ID' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Maximum number of products to return' })
-  @ApiQuery({ name: 'page', required: false, description: 'Page number for pagination' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Maximum number of products to return',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number for pagination',
+  })
   @Get(':id/products')
   async getCategoryProducts(
     @Param('id') id: string,
@@ -38,7 +58,7 @@ export class CategoriesController {
     return this.categoriesService.getCategoryProducts(
       id,
       limit ? parseInt(limit, 10) : undefined,
-      page ? parseInt(page, 10) : undefined
+      page ? parseInt(page, 10) : undefined,
     );
   }
 }

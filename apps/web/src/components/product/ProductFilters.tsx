@@ -14,7 +14,7 @@ export default function ProductFilters({
   updateFilters,
 }: ProductFiltersProps) {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
+    [],
   );
   const [priceRange, setPriceRange] = useState({
     min: filters.minPrice || 0,

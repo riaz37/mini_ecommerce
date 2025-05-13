@@ -44,7 +44,9 @@ export default function ContactPage() {
       setSubmitSuccess(true);
       form.reset();
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Something went wrong");
+      setSubmitError(
+        error instanceof Error ? error.message : "Something went wrong",
+      );
     } finally {
       setIsSubmitting(false);
     }

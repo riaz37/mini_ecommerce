@@ -49,13 +49,12 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @HttpCode(200)
   @Post('login')
-  async login(
-    @Request() req,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  async login(@Request() req, @Res({ passthrough: true }) response: Response) {
     const { access_token, user } = await this.authService.login(req.user);
-    const refresh_token = await this.authService.generateRefreshToken(req.user.id);
-    
+    const refresh_token = await this.authService.generateRefreshToken(
+      req.user.id,
+    );
+
     // Set refresh token in HTTP-only cookie
     response.cookie('refresh_token', refresh_token, {
       httpOnly: true,
@@ -64,7 +63,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/',
     });
-    
+
     // Set access token in HTTP-only cookie
     response.cookie('access_token', access_token, {
       httpOnly: true,
@@ -73,7 +72,7 @@ export class AuthController {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       path: '/',
     });
-    
+
     // Return user data (but not tokens since they're in cookies)
     return { user, access_token };
   }
@@ -84,14 +83,17 @@ export class AuthController {
   @ApiCookieAuth('refresh_token')
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
-  async refresh(@Request() req, @Res({ passthrough: true }) response: Response) {
+  async refresh(
+    @Request() req,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     // Get user data from the validated JWT token
     const user = await this.authService.getUserFromToken(req.user.userId);
-    
+
     // Generate new tokens
     const { access_token } = await this.authService.login(user);
     const refresh_token = await this.authService.generateRefreshToken(user.id);
-    
+
     // Update refresh token cookie
     response.cookie('refresh_token', refresh_token, {
       httpOnly: true,
@@ -100,7 +102,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/',
     });
-    
+
     // Update access token cookie
     response.cookie('access_token', access_token, {
       httpOnly: true,
@@ -109,7 +111,7 @@ export class AuthController {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       path: '/',
     });
-    
+
     // Return user data
     return { user };
   }
@@ -145,7 +147,7 @@ export class AuthController {
       sameSite: 'strict',
       path: '/',
     });
-    
+
     // Clear the access token cookie
     response.clearCookie('access_token', {
       httpOnly: true,
@@ -153,7 +155,7 @@ export class AuthController {
       sameSite: 'strict',
       path: '/',
     });
-    
+
     return { message: 'Logout successful' };
   }
 }

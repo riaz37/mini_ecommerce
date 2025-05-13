@@ -10,7 +10,9 @@ import React, {
 import { apiClient, setAuthToken } from "@/lib/api/client";
 
 // Create a context for cart merge triggering
-const CartMergeContext = createContext<{ triggerMerge: () => void } | undefined>(undefined);
+const CartMergeContext = createContext<
+  { triggerMerge: () => void } | undefined
+>(undefined);
 
 export function useCartMerge() {
   return useContext(CartMergeContext);
@@ -45,7 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cartMergeTrigger, setCartMergeTrigger] = useState<(() => void) | null>(null);
+  const [cartMergeTrigger, setCartMergeTrigger] = useState<(() => void) | null>(
+    null,
+  );
 
   // Check for existing session on mount
   useEffect(() => {
@@ -53,18 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         // Try to refresh the token on initial load
         const refreshed = await refreshToken();
-        
+
         if (!refreshed) {
           setUser(null);
           setIsLoading(false);
           return;
         }
-        
+
         // If refresh successful, get user data
         const userData = await apiClient("auth/me", {
-          requireAuth: true
+          requireAuth: true,
         });
-        
+
         setUser({
           id: userData.id,
           email: userData.email,
@@ -87,13 +91,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Function to refresh the access token
   const refreshToken = async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include', // Include cookies
-      });
-      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/auth/refresh`,
+        {
+          method: "POST",
+          credentials: "include", // Include cookies
+        },
+      );
+
       if (!response.ok) return false;
-      
+
       const data = await response.json();
       setAuthToken(data.access_token);
       return true;
@@ -117,12 +124,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.access_token) {
         setAuthToken(response.access_token);
       }
-      
+
       // Set user in state
       setUser(response.user);
 
       // Trigger cart merge if function is available
-      if (typeof cartMergeTrigger === 'function') {
+      if (typeof cartMergeTrigger === "function") {
         setTimeout(() => cartMergeTrigger(), 100); // Small delay to ensure auth is complete
       }
 
@@ -161,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Store token in memory (not localStorage)
       setAuthToken(loginResponse.access_token);
-      
+
       setUser(loginResponse.user);
     } catch (err) {
       setError("Registration failed. Please try again.");
@@ -175,12 +182,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       await apiClient("auth/logout", {
-        method: "POST"  // Explicitly set method to POST
+        method: "POST", // Explicitly set method to POST
       });
 
       // Clear token from memory (for backward compatibility)
       setAuthToken(null);
-      
+
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -195,7 +202,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{ user, isLoading, error, login, register, logout, clearError }}
     >
-      <CartMergeContext.Provider value={{ triggerMerge: cartMergeTrigger || (() => {}) }}>
+      <CartMergeContext.Provider
+        value={{ triggerMerge: cartMergeTrigger || (() => {}) }}
+      >
         {children}
       </CartMergeContext.Provider>
     </AuthContext.Provider>

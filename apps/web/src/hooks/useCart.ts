@@ -48,7 +48,7 @@ export function useCart() {
         subtotal: serverCart.subtotal || 0,
         tax: serverCart.tax || 0,
         total: serverCart.total || 0,
-      })
+      }),
     );
   };
 
@@ -75,7 +75,8 @@ export function useCart() {
   }, [dispatch, user?.id]);
 
   const handleCartMerge = async () => {
-    if (mergeStatusRef.current.completed || mergeStatusRef.current.inProgress) return;
+    if (mergeStatusRef.current.completed || mergeStatusRef.current.inProgress)
+      return;
 
     try {
       mergeStatusRef.current.inProgress = true;
@@ -84,12 +85,12 @@ export function useCart() {
 
       // Get the merged cart directly from the merge endpoint
       const mergedCart = await mergeCart();
-      
+
       // Update Redux with the merged cart data
       updateReduxCart(mergedCart);
 
       console.log("Cart merge successful", mergedCart);
-      
+
       mergeStatusRef.current.completed = true;
       globalMergeStatus.completed = true;
     } catch (err) {
@@ -134,24 +135,24 @@ export function useCart() {
     try {
       const updatedCart = await addToCart(product.id, quantity);
       updateReduxCart(updatedCart);
-      
+
       // Show success toast
       toast.success(`${product.name} added to cart!`, {
         duration: 3000,
         position: "bottom-right",
         icon: "🛒",
       });
-      
+
       return updatedCart;
     } catch (error) {
       handleApiError(error, "Failed to add item to cart");
-      
+
       // Show error toast
       toast.error("Failed to add item to cart", {
         duration: 3000,
         position: "bottom-right",
       });
-      
+
       throw error;
     } finally {
       setIsLoading(false);
@@ -165,23 +166,23 @@ export function useCart() {
     try {
       const updatedCart = await updateCartItem(productId, quantity);
       updateReduxCart(updatedCart);
-      
+
       // Show success toast
       toast.success(`Cart updated!`, {
         duration: 2000,
         position: "bottom-right",
       });
-      
+
       return updatedCart;
     } catch (error) {
       handleApiError(error, "Failed to update cart item");
-      
+
       // Show error toast
       toast.error("Failed to update cart", {
         duration: 3000,
         position: "bottom-right",
       });
-      
+
       throw error;
     } finally {
       setIsLoading(false);
@@ -195,23 +196,23 @@ export function useCart() {
     try {
       const updatedCart = await removeCartItem(productId);
       updateReduxCart(updatedCart);
-      
+
       // Show success toast
       toast.success(`Item removed from cart`, {
         duration: 2000,
         position: "bottom-right",
       });
-      
+
       return updatedCart;
     } catch (error) {
       handleApiError(error, "Failed to remove item from cart");
-      
+
       // Show error toast
       toast.error("Failed to remove item", {
         duration: 3000,
         position: "bottom-right",
       });
-      
+
       throw error;
     } finally {
       setIsLoading(false);
@@ -233,23 +234,23 @@ export function useCart() {
       };
 
       dispatch(hydrateCart(normalizedCart));
-      
+
       // Show success toast
       toast.success(`Cart cleared`, {
         duration: 2000,
         position: "bottom-right",
       });
-      
+
       return normalizedCart;
     } catch (error) {
       handleApiError(error, "Failed to clear cart");
-      
+
       // Show error toast
       toast.error("Failed to clear cart", {
         duration: 3000,
         position: "bottom-right",
       });
-      
+
       throw error;
     } finally {
       setIsLoading(false);
@@ -258,7 +259,7 @@ export function useCart() {
 
   const checkout = async (
     shippingAddress: ShippingAddress,
-    paymentMethod: PaymentMethod
+    paymentMethod: PaymentMethod,
   ) => {
     setIsLoading(true);
     setError(null);

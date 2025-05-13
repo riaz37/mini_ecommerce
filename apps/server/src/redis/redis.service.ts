@@ -12,20 +12,26 @@ export class RedisService implements OnModuleInit {
 
   async onModuleInit() {
     const redisUrl = process.env.REDIS_URL;
-    
+
     if (!redisUrl) {
-      throw new Error('Redis URL is required. Please set REDIS_URL environment variable.');
+      throw new Error(
+        'Redis URL is required. Please set REDIS_URL environment variable.',
+      );
     }
-    
+
     this.client = new Redis(redisUrl);
-    
+
     console.log('Connected to Redis');
   }
 
   async get<T>(key: string): Promise<T | null> {
     try {
       const value = await this.client.get(key);
-      return value ? (typeof value === 'string' ? JSON.parse(value) as T : value as T) : null;
+      return value
+        ? typeof value === 'string'
+          ? (JSON.parse(value) as T)
+          : (value as T)
+        : null;
     } catch (error) {
       console.error('Redis get error:', error);
       return null;

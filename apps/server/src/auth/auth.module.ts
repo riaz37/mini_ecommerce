@@ -15,12 +15,7 @@ import { JwtRefreshStrategy } from './jwt-refresh.strategy';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  providers: [
-    AuthService, 
-    JwtStrategy, 
-    LocalStrategy, 
-    JwtRefreshStrategy
-  ],
+  providers: [AuthService, JwtStrategy, LocalStrategy, JwtRefreshStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

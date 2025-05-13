@@ -20,7 +20,13 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      customerId: user.customerId, // Include customerId in the token
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -28,6 +34,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        customerId: user.customerId, // Include in the response
       },
     };
   }
@@ -41,29 +48,30 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
     const name = `${firstName} ${lastName}`;
 
-    // Create user
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
-
     // Check if customer with this email already exists
-    const existingCustomer = await this.prisma.customer.findUnique({
+    let customer = await this.prisma.customer.findUnique({
       where: { email },
     });
 
     // Create customer record if it doesn't exist
-    if (!existingCustomer) {
-      await this.prisma.customer.create({
+    if (!customer) {
+      customer = await this.prisma.customer.create({
         data: {
           email,
           name,
         },
       });
     }
+
+    // Create user with reference to customer
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        customerId: customer.id, // Link to customer
+      },
+    });
 
     const { password: _, ...result } = user;
     return result;

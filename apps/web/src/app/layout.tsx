@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartMergeProvider } from "@/providers/CartMergeProvider";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,23 +31,23 @@ export default function RootLayout({
                 <Header />
                 <main className="flex-grow">{children}</main>
                 <Footer />
-                <Toaster 
+                <Toaster
                   position="bottom-right"
                   toastOptions={{
                     style: {
-                      background: '#363636',
-                      color: '#fff',
-                      borderRadius: '8px',
-                      padding: '16px',
+                      background: "#363636",
+                      color: "#fff",
+                      borderRadius: "8px",
+                      padding: "16px",
                     },
                     success: {
                       style: {
-                        background: '#4CAF50',
+                        background: "#4CAF50",
                       },
                     },
                     error: {
                       style: {
-                        background: '#F44336',
+                        background: "#F44336",
                       },
                     },
                   }}

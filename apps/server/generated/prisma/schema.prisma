@@ -9,13 +9,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String    @id @default(uuid())
+  email      String    @unique
+  password   String
+  name       String?
+  role       Role      @default(USER)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([customerId])
 }
 
 model Customer {
@@ -24,6 +28,7 @@ model Customer {
   name      String
   address   String?
   phone     String?
+  users     User[] // Add this relation
   orders    Order[]
   ratings   Rating[]
   createdAt DateTime @default(now())

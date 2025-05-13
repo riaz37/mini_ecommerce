@@ -3,18 +3,18 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
-  images: string[];
-  categoryId: string;
-  inStock: boolean;
-  quantity?: number;
+  price: number | string;
+  stock?: number;
+  inStock?: boolean;
   rating?: number;
   reviewCount?: number;
-  features?: string[];
-  specifications?: Record<string, string>;
-  relatedProducts?: string[];
-  createdAt: string;
-  updatedAt: string;
+  categoryId: string;
+  category?: {
+    id: string;
+    name: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProductFilters {
@@ -53,7 +53,7 @@ export interface User {
 // Cart types
 export interface CartItem {
   productId: string;
-  id: string; 
+  id: string;
   name: string;
   price: number;
   quantity: number;
@@ -113,4 +113,20 @@ export interface Review {
   rating: number;
   comment?: string;
   createdAt: string;
+}
+
+// Add or update the Rating interface
+export interface Rating {
+  id?: string;
+  productId: string;
+  customerId: string;
+  value: number;
+  comment?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  customer?: {
+    id: string;
+    name: string;
+  };
+  customerName?: string;
 }

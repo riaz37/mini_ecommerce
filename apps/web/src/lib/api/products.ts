@@ -42,38 +42,84 @@ export async function getProducts(filters: ProductFilters = {}) {
   const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
 
   const products = await apiClient(endpoint);
-  
+
   // Add inStock property to each product based on stock value
-  return products.map(product => ({
+  return products.map((product) => ({
     ...product,
-    inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0)
+    inStock:
+      product.inStock !== undefined ? product.inStock : product.stock > 0,
   }));
 }
 
 export async function getProductById(id: string): Promise<Product> {
   const product = await apiClient(`/products/${id}`);
-  
+
   // Add inStock property based on stock value if it doesn't exist
   if (product.inStock === undefined && product.stock !== undefined) {
     product.inStock = product.stock > 0;
   }
-  
+
   return product;
 }
 
 export async function getProductRatings(productId: string) {
-  return await apiClient(`/products/${productId}/ratings`);
+  // Add a cache-busting parameter to ensure we get fresh data
+  const timestamp = new Date().getTime();
+  const ratings = await apiClient(
+    `/products/${productId}/ratings?_t=${timestamp}`,
+  );
+
+  // Normalize the ratings data to ensure consistent structure
+  return ratings.map((rating) => ({
+    id: rating.id,
+    productId: rating.productId,
+    customerId: rating.customerId,
+    value: rating.value,
+    comment: rating.comment,
+    createdAt: rating.createdAt,
+    updatedAt: rating.updatedAt,
+    customer: rating.customer,
+    // For backward compatibility
+    customerName: rating.customer?.name || rating.customerName || "Anonymous",
+  }));
 }
 
 export async function rateProduct(
   productId: string,
   data: { rating: number; comment?: string },
 ) {
-  return await apiClient(`/products/${productId}/ratings`, {
-    method: "POST",
-    body: data,
-    requireAuth: true,
-  });
+  // First, get the current user's information including customer ID
+  try {
+    const userInfo = await apiClient("/auth/me", { requireAuth: true });
+
+    // Use the customer ID if available, otherwise use "current"
+    const customerId = userInfo?.customerId || "current";
+
+    return await apiClient(`/products/rate`, {
+      method: "POST",
+      body: {
+        productId,
+        customerId,
+        value: data.rating,
+        comment: data.comment,
+      },
+      requireAuth: true,
+    });
+  } catch (error) {
+    console.error("Error getting user info:", error);
+
+    // Fall back to using "current" if we can't get the user info
+    return await apiClient(`/products/rate`, {
+      method: "POST",
+      body: {
+        productId,
+        customerId: "current",
+        value: data.rating,
+        comment: data.comment,
+      },
+      requireAuth: true,
+    });
+  }
 }
 
 export async function getFeaturedProducts() {

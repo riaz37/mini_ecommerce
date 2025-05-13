@@ -8,6 +8,8 @@ import {
   Put,
   Query,
   UseGuards,
+  Request,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -142,7 +144,22 @@ export class ProductsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('rate')
-  async rateProduct(@Body() createRatingDto: CreateRatingDto) {
+  async rateProduct(@Body() createRatingDto: CreateRatingDto, @Request() req) {
+    // If customerId is "current", use the authenticated user's customerId
+    if (createRatingDto.customerId === 'current') {
+      if (!req.user.customerId) {
+        throw new BadRequestException(
+          'User does not have an associated customer profile',
+        );
+      }
+      createRatingDto.customerId = req.user.customerId;
+    }
+
+    // Ensure customerId is not undefined or empty
+    if (!createRatingDto.customerId) {
+      throw new BadRequestException('Customer ID is required');
+    }
+
     return this.productsService.createRating(createRatingDto);
   }
 

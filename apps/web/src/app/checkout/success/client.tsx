@@ -30,7 +30,7 @@ export default function CheckoutSuccessClient() {
         setLoading(true);
 
         const orderData = await apiClient(
-          `/checkout/success?session_id=${sessionId}`
+          `/checkout/success?session_id=${sessionId}`,
         );
 
         if (orderData) {

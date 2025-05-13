@@ -15,7 +15,7 @@ export async function getCart(): Promise<Cart> {
 // Add item to cart
 export async function addToCart(
   productId: string,
-  quantity: number
+  quantity: number,
 ): Promise<Cart> {
   return await apiClient("/cart/add", {
     method: "POST",
@@ -26,7 +26,7 @@ export async function addToCart(
 // Update cart item quantity
 export async function updateCartItem(
   productId: string,
-  quantity: number
+  quantity: number,
 ): Promise<Cart> {
   return await apiClient(`/cart/items/${productId}`, {
     method: "PUT",

@@ -45,7 +45,7 @@ export default function CheckoutPage() {
     // Calculate subtotal from cart items
     const subtotal = cart.items.reduce(
       (sum, item) => sum + item.price * item.quantity,
-      0
+      0,
     );
 
     // Calculate shipping (free over $50)
@@ -96,7 +96,7 @@ export default function CheckoutPage() {
       // Use the checkout function from useCart hook
       const result = await checkout(
         data.shippingAddress as ShippingAddress,
-        paymentMethod as PaymentMethod
+        paymentMethod as PaymentMethod,
       );
 
       // If we get a URL back, it's a redirect to Stripe

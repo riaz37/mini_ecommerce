@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -26,55 +27,55 @@ export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(params: FindAllParams) {
-    const { 
-      categoryId, 
-      minPrice, 
-      maxPrice, 
-      minRating, 
+    const {
+      categoryId,
+      minPrice,
+      maxPrice,
+      minRating,
       search,
       sortBy,
       sortOrder = 'asc',
       featured,
       limit = 20,
-      page = 1
+      page = 1,
     } = params;
 
     // Calculate pagination
     const skip = (page - 1) * limit;
 
     // Build the orderBy object based on sortBy and sortOrder
-    const orderBy = sortBy 
-      ? { [sortBy]: sortOrder } 
+    const orderBy = sortBy
+      ? { [sortBy]: sortOrder }
       : { createdAt: 'desc' as const };
 
     // Build the where clause
     const where: any = {};
-  
+
     if (categoryId) {
       where.categoryId = categoryId;
     }
-  
+
     if (minPrice !== undefined) {
       where.price = { ...where.price, gte: minPrice };
     }
-  
+
     if (maxPrice !== undefined) {
       where.price = { ...where.price, lte: maxPrice };
     }
-  
+
     if (minRating !== undefined) {
       where.rating = { gte: minRating };
     }
-  
+
     if (featured) {
       where.featured = true;
     }
-  
+
     // Handle search - use contains without mode for compatibility
     if (search) {
       where.OR = [
         { name: { contains: search } },
-        { description: { contains: search } }
+        { description: { contains: search } },
       ];
     }
 
@@ -85,7 +86,7 @@ export class ProductsService {
       },
       orderBy,
       take: Number(limit),
-      skip
+      skip,
     });
   }
 
@@ -155,6 +156,11 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${productId} not found`);
     }
 
+    // Check if customerId is provided and valid
+    if (!customerId) {
+      throw new BadRequestException('Customer ID is required');
+    }
+
     // Check if customer exists
     const customer = await this.prisma.customer.findUnique({
       where: { id: customerId },
@@ -165,25 +171,49 @@ export class ProductsService {
     }
 
     try {
-      // Create or update rating
-      const rating = await this.prisma.rating.upsert({
+      // Check if rating already exists
+      const existingRating = await this.prisma.rating.findUnique({
         where: {
           productId_customerId: {
             productId,
             customerId,
           },
         },
-        update: {
-          value,
-          comment,
-        },
-        create: {
-          value,
-          comment,
-          productId,
-          customerId,
-        },
       });
+
+      let rating;
+
+      if (existingRating) {
+        // Update existing rating
+        rating = await this.prisma.rating.update({
+          where: {
+            id: existingRating.id,
+          },
+          data: {
+            value,
+            comment,
+            updatedAt: new Date(),
+          },
+        });
+
+        console.log(
+          `Updated rating ${rating.id} for product ${productId} by customer ${customerId}`,
+        );
+      } else {
+        // Create new rating
+        rating = await this.prisma.rating.create({
+          data: {
+            value,
+            comment,
+            productId,
+            customerId,
+          },
+        });
+
+        console.log(
+          `Created new rating ${rating.id} for product ${productId} by customer ${customerId}`,
+        );
+      }
 
       // Update product average rating
       const ratings = await this.prisma.rating.findMany({
@@ -201,6 +231,7 @@ export class ProductsService {
 
       return rating;
     } catch (error) {
+      console.error('Error creating/updating rating:', error);
       throw new ConflictException('Error creating rating');
     }
   }

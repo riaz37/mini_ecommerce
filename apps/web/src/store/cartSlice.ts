@@ -17,10 +17,13 @@ const initialState: CartState = {
 
 // Helper function to calculate cart totals
 const calculateTotals = (items: CartItem[]) => {
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
   const tax = subtotal * 0.08; // 8% tax rate
   const total = subtotal + tax;
-  
+
   return { subtotal, tax, total };
 };
 
@@ -32,7 +35,7 @@ export const cartSlice = createSlice({
     hydrateCart: (state, action: PayloadAction<CartState>) => {
       return {
         ...state,
-        items: action.payload.items.map(item => ({
+        items: action.payload.items.map((item) => ({
           ...item,
           id: item.id || item.productId, // Ensure id exists for backward compatibility
         })),
@@ -44,8 +47,6 @@ export const cartSlice = createSlice({
   },
 });
 
-export const {
-  hydrateCart,
-} = cartSlice.actions;
+export const { hydrateCart } = cartSlice.actions;
 
 export default cartSlice.reducer;

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // We'll keep this for backward compatibility, but it won't be the primary auth method
 let inMemoryToken: string | null = null;
@@ -20,13 +20,13 @@ function getAuthToken(): string | null {
 
 export async function apiClient<T = any>(
   endpoint: string,
-  options: ApiClientOptions = {}
+  options: ApiClientOptions = {},
 ): Promise<T> {
   const { body, method = "GET", requireAuth = false, headers = {} } = options;
 
   const requestHeaders: HeadersInit = {
     "Content-Type": "application/json",
-    ...headers
+    ...headers,
   };
 
   // We'll still include the token in the Authorization header if available
@@ -39,18 +39,23 @@ export async function apiClient<T = any>(
   const config: RequestInit = {
     method,
     headers: requestHeaders,
-    credentials: 'include', // This ensures cookies are sent with the request
+    credentials: "include", // This ensures cookies are sent with the request
     body: body ? JSON.stringify(body) : undefined,
   };
 
-  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  
-  console.log(`Making ${method} request to ${normalizedEndpoint}`, { 
-    withCredentials: true
+  const normalizedEndpoint = endpoint.startsWith("/")
+    ? endpoint
+    : `/${endpoint}`;
+
+  console.log(`Making ${method} request to ${normalizedEndpoint}`, {
+    withCredentials: true,
   });
 
   try {
-    const response = await fetch(`${API_BASE_URL}${normalizedEndpoint}`, config);
+    const response = await fetch(
+      `${API_BASE_URL}${normalizedEndpoint}`,
+      config,
+    );
 
     if (response.status === 401) {
       // Try to refresh the token
@@ -67,16 +72,17 @@ export async function apiClient<T = any>(
       if (errorData.statusCode && errorData.message) {
         throw new Error(
           Array.isArray(errorData.message)
-            ? errorData.message.join(', ')
-            : errorData.message
+            ? errorData.message.join(", ")
+            : errorData.message,
         );
       }
 
-      const errorMessage = errorData.message || response.statusText || 'Something went wrong';
+      const errorMessage =
+        errorData.message || response.statusText || "Something went wrong";
       throw new Error(errorMessage);
     }
 
-    if (response.headers.get('content-type')?.includes('application/json')) {
+    if (response.headers.get("content-type")?.includes("application/json")) {
       return await response.json();
     }
 
@@ -90,12 +96,12 @@ export async function apiClient<T = any>(
 async function refreshToken(): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include', // Include cookies
+      method: "POST",
+      credentials: "include", // Include cookies
     });
-    
+
     if (!response.ok) return false;
-    
+
     // We don't need to extract the token since it's in the cookies
     return true;
   } catch (error) {
@@ -109,7 +115,11 @@ function normalizeProduct(product: any) {
 
   return {
     ...product,
-    price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
-    inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0)
+    price:
+      typeof product.price === "string"
+        ? parseFloat(product.price)
+        : product.price,
+    inStock:
+      product.inStock !== undefined ? product.inStock : product.stock > 0,
   };
 }

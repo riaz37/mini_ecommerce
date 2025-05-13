@@ -176,13 +176,13 @@ export class OrdersService {
     try {
       // Use the deleteCart method from RedisService
       await this.redisService.deleteCart(sessionId);
-      
+
       // Return a complete cart object with all expected properties
-      return { 
-        items: [], 
-        subtotal: 0, 
-        tax: 0, 
-        total: 0 
+      return {
+        items: [],
+        subtotal: 0,
+        tax: 0,
+        total: 0,
       };
     } catch (error) {
       console.error('Error clearing cart:', error);

@@ -9,7 +9,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   ): boolean | Promise<boolean> | Observable<boolean> {
     // Get the request object
     const request = context.switchToHttp().getRequest();
-    
+
     // Make authentication optional for cart endpoints
     if (request.url.includes('/cart')) {
       try {
@@ -19,7 +19,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         return true;
       }
     }
-    
+
     // For non-cart endpoints, use normal JWT authentication
     return super.canActivate(context);
   }

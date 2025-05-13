@@ -60,7 +60,10 @@ export class OrdersController {
   @ApiOperation({ summary: 'Get cart contents' })
   @ApiResponse({ status: 200, description: 'Return cart contents' })
   @Get('cart')
-  async getCart(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+  async getCart(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     // Check if user is authenticated
     const user = (request as any).user;
     const cookies = (request as unknown as ExpressRequest).cookies;
@@ -86,7 +89,7 @@ export class OrdersController {
     // For guest users, create a session if one doesn't exist
     if (!sessionId) {
       const newSessionId = uuidv4();
-      
+
       // Set session ID in HTTP-only cookie
       response.cookie('cart_session_id', newSessionId, {
         httpOnly: true,
@@ -95,15 +98,15 @@ export class OrdersController {
         path: '/',
         sameSite: 'strict',
       });
-      
+
       console.log(`Created new session ID for guest: ${newSessionId}`);
-      
+
       // Return empty cart for new session
-      return { 
-        items: [], 
-        subtotal: 0, 
-        tax: 0, 
-        total: 0 
+      return {
+        items: [],
+        subtotal: 0,
+        tax: 0,
+        total: 0,
       };
     }
 
@@ -116,13 +119,13 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   @Post('cart/add')
   async addToCart(
-    @Body() addToCartDto: AddToCartDto, 
-    @Req() request: ExpressRequest, 
-    @Res({ passthrough: true }) response: Response
+    @Body() addToCartDto: AddToCartDto,
+    @Req() request: ExpressRequest,
+    @Res({ passthrough: true }) response: Response,
   ) {
     // Log cookies for debugging
     console.log('Cookies received:', request.cookies);
-    
+
     // Check if cookies exist
     const sessionId = request.cookies?.cart_session_id;
 
@@ -130,7 +133,7 @@ export class OrdersController {
       console.log('No session ID found in cookies, creating new session');
       // Create a new session if one doesn't exist
       const newSessionId = uuidv4();
-      
+
       // Set session ID in HTTP-only cookie
       response.cookie('cart_session_id', newSessionId, {
         httpOnly: true,
@@ -139,9 +142,9 @@ export class OrdersController {
         path: '/',
         sameSite: 'none', // Try 'none' for cross-site requests
       });
-      
+
       console.log('Created new session ID:', newSessionId);
-      
+
       // Use the new session ID
       return this.ordersService.addToCart(
         newSessionId,
@@ -151,7 +154,7 @@ export class OrdersController {
     }
 
     console.log('Using existing session ID:', sessionId);
-    
+
     // Use sessionId from cookies
     return this.ordersService.addToCart(
       sessionId,
@@ -221,7 +224,7 @@ export class OrdersController {
       console.log(`Clearing cart for session: ${sessionId}`);
       const result = await this.ordersService.clearCart(sessionId);
       console.log('Cart cleared successfully:', result);
-      
+
       return result;
     } catch (error) {
       console.error('Error in clearCart controller:', error);
@@ -268,7 +271,7 @@ export class OrdersController {
 
       // Get cart from Redis
       const cart = await this.ordersService.getCart(checkoutDto.sessionId);
-      
+
       if (!cart || !cart.items || cart.items.length === 0) {
         throw new BadRequestException('Cart is empty');
       }
@@ -276,9 +279,9 @@ export class OrdersController {
       // For credit card payments, create a Stripe checkout session
       if (checkoutDto.paymentMethod.type === PaymentMethodType.CREDIT_CARD) {
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        
+
         // Format line items for Stripe
-        const lineItems = cart.items.map(item => ({
+        const lineItems = cart.items.map((item) => ({
           price_data: {
             currency: 'usd',
             product_data: {
@@ -295,7 +298,7 @@ export class OrdersController {
           sessionId: checkoutDto.sessionId,
           shippingAddress: JSON.stringify(checkoutDto.shippingAddress),
         };
-        
+
         if (checkoutDto.customerId) {
           metadata['customerId'] = checkoutDto.customerId;
         }
@@ -325,7 +328,7 @@ export class OrdersController {
   @Get('checkout/success')
   async handleStripeSuccess(
     @Query('session_id') stripeSessionId: string,
-    @Req() request: ExpressRequest
+    @Req() request: ExpressRequest,
   ) {
     try {
       if (!stripeSessionId) {
@@ -335,10 +338,9 @@ export class OrdersController {
       const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
       // Retrieve the Stripe checkout session with expanded payment intent
-      const session = await stripe.checkout.sessions.retrieve(
-        stripeSessionId,
-        { expand: ['payment_intent'] }
-      );
+      const session = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+        expand: ['payment_intent'],
+      });
 
       // Verify the payment was successful
       if (session.payment_status !== 'paid') {
@@ -350,22 +352,21 @@ export class OrdersController {
       if (!cartSessionId) {
         throw new BadRequestException('Invalid session data');
       }
-      
+
       // Verify that this cart session belongs to the current user/session
       const cookies = request.cookies;
       const currentSessionId = cookies?.cart_session_id;
-      
+
       // If the current session doesn't match the one used to create the order,
       // we'll still process it but log a warning as this could indicate session hijacking
       if (currentSessionId && currentSessionId !== cartSessionId) {
-        console.warn(`Session mismatch in Stripe checkout: ${currentSessionId} vs ${cartSessionId}`);
+        console.warn(
+          `Session mismatch in Stripe checkout: ${currentSessionId} vs ${cartSessionId}`,
+        );
       }
 
       // Create order from the session metadata
-      const {
-        customerId,
-        shippingAddress,
-      } = session.metadata;
+      const { customerId, shippingAddress } = session.metadata;
 
       if (!shippingAddress) {
         throw new BadRequestException('Missing shipping address');
@@ -381,7 +382,7 @@ export class OrdersController {
           details: {
             paymentIntentId: session.payment_intent?.id,
             paymentMethod: session.payment_intent?.payment_method,
-          }
+          },
         },
         stripeSession: session,
       });
@@ -411,24 +412,24 @@ export class OrdersController {
       const event = stripe.webhooks.constructEvent(
         payload,
         signature,
-        endpointSecret
+        endpointSecret,
       );
 
       // Handle different event types
       switch (event.type) {
         case 'checkout.session.completed':
           const session = event.data.object;
-          
+
           // Process the successful checkout
           await this.processSuccessfulCheckout(session);
           break;
-          
+
         case 'payment_intent.payment_failed':
           const paymentIntent = event.data.object;
           console.log(`Payment failed: ${paymentIntent.id}`);
           // Handle failed payment (e.g., notify customer)
           break;
-          
+
         default:
           console.log(`Unhandled event type: ${event.type}`);
       }
@@ -460,7 +461,7 @@ export class OrdersController {
         type: PaymentMethodType.CREDIT_CARD,
         details: {
           paymentIntentId: session.payment_intent,
-        }
+        },
       },
       stripeSession: session,
     });
@@ -476,13 +477,13 @@ export class OrdersController {
     ) {
       throw error;
     }
-    
+
     // Log the error for debugging
     console.error(`${defaultMessage}:`, error);
-    
+
     // Throw a standardized error
     throw new InternalServerErrorException(
-      `${defaultMessage}: ${error.message || 'Unknown error'}`
+      `${defaultMessage}: ${error.message || 'Unknown error'}`,
     );
   }
 }

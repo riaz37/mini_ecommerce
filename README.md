@@ -16,6 +16,7 @@ This project is a comprehensive e-commerce solution with the following features:
 ## Tech Stack
 
 ### Frontend (apps/web)
+
 - **Next.js 15** with App Router
 - **React 19** for UI components
 - **Redux Toolkit** for state management
@@ -23,6 +24,7 @@ This project is a comprehensive e-commerce solution with the following features:
 - **Shadcn UI** components
 
 ### Backend (apps/server)
+
 - **NestJS** framework
 - **Prisma** ORM for database access
 - **MySQL** database
@@ -30,6 +32,7 @@ This project is a comprehensive e-commerce solution with the following features:
 - **Swagger** for API documentation
 
 ### Shared Packages
+
 - **@repo/ui**: Shared React component library
 - **@repo/eslint-config**: Shared ESLint configurations
 - **@repo/typescript-config**: Shared TypeScript configurations
@@ -37,6 +40,7 @@ This project is a comprehensive e-commerce solution with the following features:
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 18 or higher
 - PNPM 9.0.0
 - Docker and Docker Compose (for local development)
@@ -44,34 +48,37 @@ This project is a comprehensive e-commerce solution with the following features:
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd mini_ecommerce
    ```
 
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Start the development environment:
+
    ```bash
    # Start the database services
    docker-compose up -d
-   
+
    # Generate Prisma client
    cd apps/server
    pnpm prisma:generate
-   
+
    # Run database migrations
    pnpm prisma:migrate
-   
+
    # Seed the database (optional)
    pnpm prisma:seed
-   
+
    # Return to root directory
    cd ../..
-   
+
    # Start all applications
    pnpm dev
    ```
@@ -85,6 +92,7 @@ pnpm dev
 ```
 
 This will start all applications in development mode:
+
 - Web frontend: http://localhost:3000
 - API server: http://localhost:3001
 - API documentation: http://localhost:3001/api
@@ -135,6 +143,7 @@ mini_ecommerce/
 ## Features
 
 ### Customer Features
+
 - Browse products by category
 - Search for products
 - View product details and reviews
@@ -145,6 +154,7 @@ mini_ecommerce/
 - Account management
 
 ### Admin Features
+
 - Product management
 - Category management
 - Order management
@@ -160,6 +170,7 @@ docker-compose up -d
 ```
 
 This starts:
+
 - MySQL database on port 3306
 - Redis on port 6379
 
