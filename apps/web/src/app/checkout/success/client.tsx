@@ -8,6 +8,18 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { apiClient } from "@/lib/api/client";
 import { useCart } from "@/hooks/useCart";
 
+const formatCurrency = (value: any): string => {
+  // Convert to number if it's not already
+  const numValue = typeof value === 'number' 
+    ? value 
+    : typeof value === 'string'
+      ? parseFloat(value)
+      : 0;
+  
+  // Check if it's a valid number
+  return isNaN(numValue) ? '0.00' : numValue.toFixed(2);
+};
+
 export default function CheckoutSuccessClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -91,7 +103,7 @@ export default function CheckoutSuccessClient() {
             <h2 className="font-medium mb-2">Order Details</h2>
             <p className="text-sm text-gray-600">Order ID: {order.id}</p>
             <p className="text-sm text-gray-600">
-              Total: ${order.total.toFixed(2)}
+              Total: ${formatCurrency(order.total)}
             </p>
           </div>
         )}

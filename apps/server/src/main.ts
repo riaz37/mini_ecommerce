@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,11 +11,24 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
+  // Configure body parsers
+  app.use(
+    bodyParser.json({
+      verify: (req: any, res, buf) => {
+        // Make raw body available for Stripe webhook verification
+        if (req.originalUrl.startsWith('/webhook/stripe')) {
+          req.rawBody = buf;
+        }
+      },
+    }),
+  );
+
   // Updated CORS configuration
   app.enableCors({
     origin: [
-      process.env.FRONTEND_URL || 'http://localhost:3000'||
-      'https://ecommerce37.vercel.app'
+      process.env.FRONTEND_URL ||
+        'http://localhost:3000' ||
+        'https://ecommerce37.vercel.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

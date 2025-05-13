@@ -328,79 +328,9 @@ export class OrdersController {
     }
   }
 
-  // Add a new webhook endpoint for Stripe events
-  @ApiOperation({ summary: 'Handle Stripe webhooks' })
-  @Post('webhook/stripe')
-  async handleStripeWebhook(
-    @Body() payload: any,
-    @Headers('stripe-signature') signature: string,
-  ) {
-    if (!signature) {
-      throw new BadRequestException('Missing Stripe signature');
-    }
-
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    try {
-      // Verify the event using the signature
-      const event = stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        endpointSecret,
-      );
-
-      // Handle different event types
-      switch (event.type) {
-        case 'checkout.session.completed':
-          const session = event.data.object;
-
-          // Process the successful checkout
-          await this.processSuccessfulCheckout(session);
-          break;
-
-        case 'payment_intent.payment_failed':
-          const paymentIntent = event.data.object;
-          console.log(`Payment failed: ${paymentIntent.id}`);
-          // Handle failed payment (e.g., notify customer)
-          break;
-
-        default:
-          console.log(`Unhandled event type: ${event.type}`);
-      }
-
-      return { received: true };
-    } catch (error) {
-      console.error('Stripe webhook error:', error);
-      throw new BadRequestException(`Webhook error: ${error.message}`);
-    }
-  }
-
-  // Helper method to process successful checkout
-  private async processSuccessfulCheckout(session: any) {
-    // Get cart session ID from metadata
-    const cartSessionId = session.metadata.sessionId;
-    const customerId = session.metadata.customerId;
-    const shippingAddress = session.metadata.shippingAddress;
-
-    if (!cartSessionId || !shippingAddress) {
-      throw new BadRequestException('Invalid session data');
-    }
-
-    // Create order in database
-    await this.ordersService.checkout({
-      sessionId: cartSessionId,
-      customerId: customerId || undefined,
-      shippingAddress: JSON.parse(shippingAddress),
-      paymentMethod: {
-        type: PaymentMethodType.CREDIT_CARD,
-        details: {
-          paymentIntentId: session.payment_intent,
-        },
-      },
-      stripeSession: session,
-    });
-  }
+  // Remove these imports if they're not used elsewhere
+  // @Headers,
+  // Remove the webhook endpoint and related methods
 
   // Helper method for consistent error handling in controllers
   private handleControllerError(error: any, defaultMessage: string): never {

@@ -10,6 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
+// Helper function to ensure numeric values
+const formatCurrency = (value: any): string => {
+  // Convert to number if it's not already
+  const numValue = typeof value === 'number' 
+    ? value 
+    : typeof value === 'string'
+      ? parseFloat(value)
+      : 0;
+  
+  // Check if it's a valid number
+  return isNaN(numValue) ? '0.00' : numValue.toFixed(2);
+};
+
 export default function OrderConfirmationPage() {
   const params = useParams();
   const [order, setOrder] = useState<Order | null>(null);
@@ -124,7 +137,7 @@ export default function OrderConfirmationPage() {
                   </p>
                 </div>
                 <div className="text-sm font-medium">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  ${formatCurrency(item.price * item.quantity)}
                 </div>
               </div>
             ))}
@@ -135,7 +148,7 @@ export default function OrderConfirmationPage() {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Subtotal</span>
-              <span>${order.subtotal.toFixed(2)}</span>
+              <span>${formatCurrency(order.subtotal)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Shipping</span>
@@ -143,7 +156,7 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Tax</span>
-              <span>${order.tax.toFixed(2)}</span>
+              <span>${formatCurrency(order.tax)}</span>
             </div>
           </div>
 
@@ -151,7 +164,7 @@ export default function OrderConfirmationPage() {
 
           <div className="flex justify-between font-medium text-lg">
             <span>Total</span>
-            <span>${order.total.toFixed(2)}</span>
+            <span>${formatCurrency(order.total)}</span>
           </div>
         </div>
 
