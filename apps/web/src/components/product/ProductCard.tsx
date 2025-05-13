@@ -109,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             disabled={isAddingToCart || !isInStock}
             className={`p-2 rounded-full ${
               isInStock
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >

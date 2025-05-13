@@ -169,13 +169,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      await apiClient("auth/register", {
+      await apiClient("/auth/register", {
         method: "POST",
         body: userData,
       });
 
       // After registration, log the user in
-      const loginResponse = await apiClient("auth/login", {
+      const loginResponse = await apiClient("/auth/login", {
         method: "POST",
         body: {
           email: userData.email,
