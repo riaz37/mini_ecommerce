@@ -69,10 +69,15 @@ export class OrdersController {
     // If user is authenticated, get their cart by user ID
     if (user) {
       try {
-        return this.ordersService.getUserCart(user.userId);
+        console.log(`Getting cart for authenticated user: ${user.userId}`);
+        const userCart = await this.ordersService.getUserCart(user.userId);
+        console.log(`User cart retrieved:`, userCart);
+        return userCart;
       } catch (error) {
+        console.error(`Error getting user cart: ${error.message}`);
         // If user cart not found, fall back to session cart
         if (sessionId) {
+          console.log(`Falling back to session cart: ${sessionId}`);
           return this.ordersService.getCart(sessionId);
         }
       }
@@ -91,6 +96,8 @@ export class OrdersController {
         sameSite: 'strict',
       });
       
+      console.log(`Created new session ID for guest: ${newSessionId}`);
+      
       // Return empty cart for new session
       return { 
         items: [], 
@@ -100,6 +107,7 @@ export class OrdersController {
       };
     }
 
+    console.log(`Getting cart for guest session: ${sessionId}`);
     return this.ordersService.getCart(sessionId);
   }
 

@@ -75,7 +75,7 @@ export class AuthController {
     });
     
     // Return user data (but not tokens since they're in cookies)
-    return { user };
+    return { user, access_token };
   }
 
   @ApiOperation({ summary: 'Refresh access token' })

@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Trigger cart merge if function is available
       if (typeof cartMergeTrigger === 'function') {
-        cartMergeTrigger();
+        setTimeout(() => cartMergeTrigger(), 100); // Small delay to ensure auth is complete
       }
 
       return response;
@@ -174,7 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await apiClient("auth/logout");
+      await apiClient("auth/logout", {
+        method: "POST"  // Explicitly set method to POST
+      });
 
       // Clear token from memory (for backward compatibility)
       setAuthToken(null);

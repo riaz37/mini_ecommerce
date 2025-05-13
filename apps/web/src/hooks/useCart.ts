@@ -82,15 +82,16 @@ export function useCart() {
       globalMergeStatus.inProgress = true;
       setIsLoading(true);
 
-      await mergeCart();
-
-      const mergedCart = await getCart();
+      // Get the merged cart directly from the merge endpoint
+      const mergedCart = await mergeCart();
+      
+      // Update Redux with the merged cart data
       updateReduxCart(mergedCart);
 
+      console.log("Cart merge successful", mergedCart);
+      
       mergeStatusRef.current.completed = true;
       globalMergeStatus.completed = true;
-
-      console.log("Cart merge successful");
     } catch (err) {
       console.error("Failed to merge carts:", err);
     } finally {
