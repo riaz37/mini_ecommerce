@@ -174,10 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await apiClient("auth/logout", {
-        method: "POST",
-        credentials: 'include',
-      });
+      await apiClient("auth/logout");
 
       // Clear token from memory (for backward compatibility)
       setAuthToken(null);
