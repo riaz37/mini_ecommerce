@@ -5,18 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { apiClient } from "@/lib/api/client";
+import { processSuccessfulPayment } from "@/lib/api/checkout";
 import { useCart } from "@/hooks/useCart";
 
 const formatCurrency = (value: any): string => {
-  // Convert to number if it's not already
   const numValue = typeof value === 'number' 
     ? value 
     : typeof value === 'string'
       ? parseFloat(value)
       : 0;
   
-  // Check if it's a valid number
   return isNaN(numValue) ? '0.00' : numValue.toFixed(2);
 };
 
@@ -25,7 +23,6 @@ export default function CheckoutSuccessClient() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [order, setOrder] = useState<any>(null);
   const { clearCart } = useCart();
 
@@ -33,36 +30,56 @@ export default function CheckoutSuccessClient() {
     const sessionId = searchParams.get("session_id");
 
     if (!sessionId) {
-      router.push("/");
+      setError("Missing session information. Please contact customer support.");
+      setLoading(false);
       return;
     }
 
     const processPayment = async () => {
       try {
         setLoading(true);
+        console.log(`Processing payment for session: ${sessionId}`);
 
-        const orderData = await apiClient(
-          `/checkout/success?session_id=${sessionId}`,
-        );
+        // Single call to process the payment
+        const orderData = await processSuccessfulPayment(sessionId);
 
         if (orderData) {
+          console.log("Order data received:", orderData);
           setOrder(orderData);
-
-          // Clear the cart after successful payment
-          await clearCart();
+          
+          // No need to clear cart here as it's handled by the backend
+          console.log("Cart already cleared by the backend");
         } else {
           throw new Error("No order data received");
         }
       } catch (err) {
         console.error("Error processing payment:", err);
-        setError("Failed to process payment. Please contact customer support.");
+        const errorMessage = err instanceof Error 
+          ? `Error: ${err.message}` 
+          : "Failed to process payment. Please contact customer support.";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
     processPayment();
-  }, [router, searchParams, clearCart]);
+  }, [searchParams]);
+
+  // Auto-redirect to home after success
+  useEffect(() => {
+    let redirectTimer: NodeJS.Timeout;
+    
+    if (order && !error) {
+      redirectTimer = setTimeout(() => {
+        router.push("/");
+      }, 5000); // Redirect after 5 seconds
+    }
+    
+    return () => {
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
+  }, [order, error, router]);
 
   if (loading) {
     return (

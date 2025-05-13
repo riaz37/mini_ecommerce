@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { OrdersService } from '../orders/orders.service';
 import { PaymentMethodType } from '../orders/dto/checkout.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WebhookService {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly prisma: PrismaService
+  ) {}
 
   async handleStripeEvent(event: any) {
     console.log(`Processing Stripe event: ${event.type}`);
@@ -37,27 +41,47 @@ export class WebhookService {
 
   // Helper method to process successful checkout
   private async processSuccessfulCheckout(session: any) {
-    // Get cart session ID from metadata
-    const cartSessionId = session.metadata.sessionId;
-    const customerId = session.metadata.customerId;
-    const shippingAddress = session.metadata.shippingAddress;
+    try {
+      // Check if an order already exists for this session
+      const existingOrder = await this.prisma.order.findFirst({
+        where: {
+          paymentMethod: {
+            contains: session.id
+          }
+        }
+      });
 
-    if (!cartSessionId || !shippingAddress) {
-      throw new BadRequestException('Invalid session data');
-    }
+      if (existingOrder) {
+        console.log(`Order already exists for session ${session.id}, skipping creation`);
+        return existingOrder;
+      }
 
-    // Create order in database
-    await this.ordersService.checkout({
-      sessionId: cartSessionId,
-      customerId: customerId || undefined,
-      shippingAddress: JSON.parse(shippingAddress),
-      paymentMethod: {
-        type: PaymentMethodType.CREDIT_CARD,
-        details: {
-          paymentIntentId: session.payment_intent,
+      // Get cart session ID from metadata
+      const cartSessionId = session.metadata.sessionId;
+      const customerId = session.metadata.customerId;
+      const shippingAddress = session.metadata.shippingAddress;
+
+      if (!cartSessionId || !shippingAddress) {
+        throw new BadRequestException('Invalid session data');
+      }
+
+      // Create order in database
+      return await this.ordersService.checkout({
+        sessionId: cartSessionId,
+        customerId: customerId || undefined,
+        shippingAddress: JSON.parse(shippingAddress),
+        paymentMethod: {
+          type: PaymentMethodType.CREDIT_CARD,
+          details: {
+            paymentIntentId: session.payment_intent,
+            sessionId: session.id, // Store session ID for deduplication
+          },
         },
-      },
-      stripeSession: session,
-    });
+        stripeSession: session,
+      });
+    } catch (error) {
+      console.error(`Error processing checkout session ${session.id}:`, error);
+      throw error;
+    }
   }
 }

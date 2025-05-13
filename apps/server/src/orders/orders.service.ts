@@ -7,7 +7,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { Cart, CartItem, CartWithTotals } from './types/cart.types';
-import { CheckoutDto } from './dto/checkout.dto';
+import { CheckoutDto, PaymentMethodType } from './dto/checkout.dto';
+import { OrderStatus } from '../../generated/prisma';
 
 @Injectable()
 export class OrdersService {
@@ -194,6 +195,27 @@ export class OrdersService {
     const { sessionId, customerId, shippingAddress, paymentMethod } =
       checkoutDto;
 
+    // Check for duplicate order if this is a Stripe payment
+    if (
+      paymentMethod.type === PaymentMethodType.CREDIT_CARD &&
+      paymentMethod.details?.sessionId
+    ) {
+      const existingOrder = await this.prisma.order.findFirst({
+        where: {
+          paymentMethod: {
+            contains: paymentMethod.details.sessionId,
+          },
+        },
+      });
+
+      if (existingOrder) {
+        console.log(
+          `Order already exists for session ${paymentMethod.details.sessionId}`,
+        );
+        return existingOrder;
+      }
+    }
+
     // Get cart from Redis using getCart method
     const cart = await this.redisService.getCart(sessionId);
 
@@ -352,6 +374,85 @@ export class OrdersService {
     } catch (error) {
       this.handleError(error, 'Failed to retrieve user cart');
     }
+  }
+
+  async createOrderFromStripeSession(session: any) {
+    try {
+      // Extract shipping address from metadata
+      let shippingAddress = {};
+      try {
+        shippingAddress = JSON.parse(session.metadata?.shippingAddress || '{}');
+      } catch (error) {
+        console.error('Error parsing shipping address:', error);
+      }
+
+      // Calculate total from Stripe data
+      const total = session.amount_total ? session.amount_total / 100 : 0;
+
+      // Process line items to ensure valid product IDs
+      const lineItems = [];
+      if (session.line_items?.data) {
+        for (const item of session.line_items.data) {
+          // Try to find a matching product in our database
+          // We'll use a default product ID if we can't find a match
+          const defaultProductId = await this.getDefaultProductId();
+          
+          lineItems.push({
+            productId: defaultProductId,
+            quantity: item.quantity || 1,
+            price: (item.price?.unit_amount || 0) / 100,
+          });
+        }
+      }
+
+      // Create order with line items
+      const order = await this.prisma.order.create({
+        data: {
+          total,
+          status: OrderStatus.PENDING,
+          shippingAddress: JSON.stringify(shippingAddress),
+          paymentMethod: JSON.stringify({
+            type: PaymentMethodType.CREDIT_CARD,
+            details: {
+              paymentIntentId: session.payment_intent?.id,
+              sessionId: session.id,
+            },
+          }),
+          // Only include customerId if it exists
+          ...(session.metadata?.customerId && {
+            customer: {
+              connect: {
+                id: session.metadata.customerId,
+              },
+            },
+          }),
+          items: {
+            create: lineItems,
+          },
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      console.log(`Created order from Stripe session: ${order.id}`);
+      return order;
+    } catch (error) {
+      console.error('Error creating order from Stripe session:', error);
+      throw error;
+    }
+  }
+
+  // Helper method to get a valid product ID from the database
+  private async getDefaultProductId(): Promise<string> {
+    // Try to find any product in the database
+    const product = await this.prisma.product.findFirst();
+    
+    if (!product) {
+      throw new Error('No products found in database to use as default');
+    }
+    
+    return product.id;
   }
 
   // Helper method for consistent error handling
