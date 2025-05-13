@@ -32,11 +32,15 @@ import {
 } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { Request as ExpressRequest } from 'express';
+import { CookieUtil } from '../common/utils/cookie.util';
 
 @ApiTags('orders')
 @Controller()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly cookieUtil: CookieUtil,
+  ) {}
 
   @ApiOperation({ summary: 'Create a new cart session' })
   @ApiResponse({ status: 201, description: 'New cart session created' })
@@ -45,12 +49,8 @@ export class OrdersController {
     const sessionId = uuidv4();
 
     // Set session ID in HTTP-only cookie
-    response.cookie('cart_session_id', sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+    this.cookieUtil.setCookie(response, 'cart_session_id', sessionId, {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/',
-      sameSite: 'strict',
     });
 
     // Also return it in the response for the initial Redux state

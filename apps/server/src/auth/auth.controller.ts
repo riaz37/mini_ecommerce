@@ -23,11 +23,15 @@ import {
   ApiBearerAuth,
   ApiCookieAuth,
 } from '@nestjs/swagger';
+import { CookieUtil } from '../common/utils/cookie.util';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private cookieUtil: CookieUtil,
+  ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered' })
@@ -51,26 +55,16 @@ export class AuthController {
   @Post('login')
   async login(@Request() req, @Res({ passthrough: true }) response: Response) {
     const { access_token, user } = await this.authService.login(req.user);
-    const refresh_token = await this.authService.generateRefreshToken(
-      req.user.id,
-    );
+    const refresh_token = await this.authService.generateRefreshToken(req.user.id);
 
     // Set refresh token in HTTP-only cookie
-    response.cookie('refresh_token', refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+    this.cookieUtil.setCookie(response, 'refresh_token', refresh_token, {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
     });
 
-    // Set access token in HTTP-only cookie
-    response.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+    // Set access token in cookie for JWT strategy
+    this.cookieUtil.setCookie(response, 'access_token', access_token, {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
-      path: '/',
     });
 
     return { user, access_token };
@@ -139,22 +133,8 @@ export class AuthController {
   @HttpCode(200)
   @Post('logout')
   async logout(@Res({ passthrough: true }) response: Response) {
-    // Clear the refresh token cookie
-    response.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-    });
-
-    // Clear the access token cookie
-    response.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-    });
-
-    return { message: 'Logout successful' };
+    this.cookieUtil.clearCookie(response, 'refresh_token');
+    this.cookieUtil.clearCookie(response, 'access_token');
+    return { success: true };
   }
 }

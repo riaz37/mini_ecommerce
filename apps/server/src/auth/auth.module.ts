@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
 import { JwtRefreshStrategy } from './jwt-refresh.strategy';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { JwtRefreshStrategy } from './jwt-refresh.strategy';
       secret: process.env.JWT_SECRET || 'secret',
       signOptions: { expiresIn: '1d' },
     }),
+    CommonModule,
   ],
   providers: [AuthService, JwtStrategy, LocalStrategy, JwtRefreshStrategy],
   controllers: [AuthController],
