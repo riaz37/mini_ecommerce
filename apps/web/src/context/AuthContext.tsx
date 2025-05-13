@@ -7,7 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { apiClient, setAuthToken } from "@/lib/api/client";
+import { apiClient } from "@/lib/api/client";
 
 // Create a context for cart merge triggering
 const CartMergeContext = createContext<
@@ -47,8 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [cartMergeTrigger, setCartMergeTrigger] = useState<(() => void) | null>(
-    null,
+    null
   );
 
   // Check for existing session on mount
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         {
           method: "POST",
           credentials: "include", // Include cookies
-        },
+        }
       );
 
       if (!response.ok) return false;

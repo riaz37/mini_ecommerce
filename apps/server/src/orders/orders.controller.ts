@@ -45,15 +45,8 @@ export class OrdersController {
   @ApiOperation({ summary: 'Create a new cart session' })
   @ApiResponse({ status: 201, description: 'New cart session created' })
   @Post('cart/session')
-  async createCartSession(@Res({ passthrough: true }) response: Response) {
-    const sessionId = uuidv4();
-
-    // Set session ID in HTTP-only cookie
-    this.cookieUtil.setCookie(response, 'cart_session_id', sessionId, {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
-
-    // Also return it in the response for the initial Redux state
+  async createCartSession(@Res({ passthrough: true }) response: Response, @Req() request: ExpressRequest) {
+    const sessionId = this.ensureCartSession(request, response);
     return { sessionId };
   }
 
@@ -61,14 +54,12 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'Return cart contents' })
   @Get('cart')
   async getCart(
-    @Req() request: Request,
+    @Req() request: ExpressRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
     // Check if user is authenticated
     const user = (request as any).user;
-    const cookies = (request as unknown as ExpressRequest).cookies;
-    const sessionId = cookies?.cart_session_id;
-
+    
     // If user is authenticated, get their cart by user ID
     if (user) {
       try {
@@ -78,30 +69,15 @@ export class OrdersController {
         return userCart;
       } catch (error) {
         console.error(`Error getting user cart: ${error.message}`);
-        // If user cart not found, fall back to session cart
-        if (sessionId) {
-          console.log(`Falling back to session cart: ${sessionId}`);
-          return this.ordersService.getCart(sessionId);
-        }
+        // Fall through to session cart handling
       }
     }
-
-    // For guest users, create a session if one doesn't exist
-    if (!sessionId) {
-      const newSessionId = uuidv4();
-
-      // Set session ID in HTTP-only cookie
-      response.cookie('cart_session_id', newSessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: '/',
-        sameSite: 'strict',
-      });
-
-      console.log(`Created new session ID for guest: ${newSessionId}`);
-
-      // Return empty cart for new session
+    
+    // For guest users or if user cart retrieval failed
+    const sessionId = this.ensureCartSession(request, response);
+    
+    // If this is a new session, return empty cart
+    if (!request.cookies?.cart_session_id) {
       return {
         items: [],
         subtotal: 0,
@@ -109,8 +85,9 @@ export class OrdersController {
         total: 0,
       };
     }
-
-    console.log(`Getting cart for guest session: ${sessionId}`);
+    
+    // Otherwise get cart from Redis
+    console.log(`Getting cart for session: ${sessionId}`);
     return this.ordersService.getCart(sessionId);
   }
 
@@ -123,39 +100,8 @@ export class OrdersController {
     @Req() request: ExpressRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
-    // Log cookies for debugging
-    console.log('Cookies received:', request.cookies);
-
-    // Check if cookies exist
-    const sessionId = request.cookies?.cart_session_id;
-
-    if (!sessionId) {
-      console.log('No session ID found in cookies, creating new session');
-      // Create a new session if one doesn't exist
-      const newSessionId = uuidv4();
-
-      // Set session ID in HTTP-only cookie
-      response.cookie('cart_session_id', newSessionId, {
-        httpOnly: true,
-        secure: false, // Set to false for local development
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: '/',
-        sameSite: 'none', // Try 'none' for cross-site requests
-      });
-
-      console.log('Created new session ID:', newSessionId);
-
-      // Use the new session ID
-      return this.ordersService.addToCart(
-        newSessionId,
-        addToCartDto.productId,
-        addToCartDto.quantity,
-      );
-    }
-
-    console.log('Using existing session ID:', sessionId);
-
-    // Use sessionId from cookies
+    const sessionId = this.ensureCartSession(request, response);
+    
     return this.ordersService.addToCart(
       sessionId,
       addToCartDto.productId,
@@ -171,15 +117,10 @@ export class OrdersController {
   async updateCartItem(
     @Param('productId') productId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
-    @Req() request: Request,
+    @Req() request: ExpressRequest,
+    @Res({ passthrough: true }) response: Response,
   ) {
-    const sessionId = (request as unknown as ExpressRequest).cookies[
-      'cart_session_id'
-    ];
-
-    if (!sessionId) {
-      throw new BadRequestException('No cart session found');
-    }
+    const sessionId = this.ensureCartSession(request, response);
 
     return this.ordersService.updateCartItem(
       sessionId,
@@ -195,15 +136,10 @@ export class OrdersController {
   @Delete('cart/items/:productId')
   async removeCartItem(
     @Param('productId') productId: string,
-    @Req() request: Request,
+    @Req() request: ExpressRequest,
+    @Res({ passthrough: true }) response: Response,
   ) {
-    const sessionId = (request as unknown as ExpressRequest).cookies[
-      'cart_session_id'
-    ];
-
-    if (!sessionId) {
-      throw new BadRequestException('No cart session found');
-    }
+    const sessionId = this.ensureCartSession(request, response);
 
     return this.ordersService.removeCartItem(sessionId, productId);
   }
@@ -211,15 +147,12 @@ export class OrdersController {
   @ApiOperation({ summary: 'Clear cart' })
   @ApiResponse({ status: 200, description: 'Cart cleared' })
   @Delete('cart')
-  async clearCart(@Req() request: Request) {
+  async clearCart(
+    @Req() request: ExpressRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     try {
-      const sessionId = (request as unknown as ExpressRequest).cookies[
-        'cart_session_id'
-      ];
-
-      if (!sessionId) {
-        throw new BadRequestException('No cart session found');
-      }
+      const sessionId = this.ensureCartSession(request, response);
 
       console.log(`Clearing cart for session: ${sessionId}`);
       const result = await this.ordersService.clearCart(sessionId);
@@ -238,12 +171,14 @@ export class OrdersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('cart/merge')
-  async mergeCart(@Request() req) {
-    const cookies = (req as unknown as ExpressRequest).cookies;
-    const sessionId = cookies?.cart_session_id;
+  async mergeCart(
+    @Request() req,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const sessionId = this.ensureCartSession(req, response);
 
     if (!sessionId) {
-      return { message: 'No guest cart to merge' };
+      return { message: 'No guest cart to merge', items: [], subtotal: 0, tax: 0, total: 0 };
     }
 
     return this.ordersService.mergeCart(sessionId, req.user.userId);
@@ -485,5 +420,32 @@ export class OrdersController {
     throw new InternalServerErrorException(
       `${defaultMessage}: ${error.message || 'Unknown error'}`,
     );
+  }
+
+  /**
+   * Helper method to ensure consistent cart session handling
+   */
+  private ensureCartSession(
+    request: ExpressRequest,
+    response: Response
+  ): string {
+    // Check if session ID exists in cookies
+    const sessionId = request.cookies?.cart_session_id;
+    
+    if (sessionId) {
+      console.log(`Using existing cart session: ${sessionId}`);
+      return sessionId;
+    }
+    
+    // Create a new session ID if one doesn't exist
+    const newSessionId = uuidv4();
+    console.log(`Creating new cart session: ${newSessionId}`);
+    
+    // Set session ID in HTTP-only cookie using cookieUtil
+    this.cookieUtil.setCookie(response, 'cart_session_id', newSessionId, {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+    
+    return newSessionId;
   }
 }
