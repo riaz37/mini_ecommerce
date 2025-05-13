@@ -151,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return response;
     } catch (error) {
+      //@ts-ignore
       const message = error.response?.data?.message || "Login failed";
       setError(message);
       throw error;
