@@ -112,8 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: credentials,
       });
 
-      // Store token in memory (not localStorage)
-      setAuthToken(response.access_token);
+      // No need to store token in memory as it's in cookies now
+      // But we'll keep this for backward compatibility
+      if (response.access_token) {
+        setAuthToken(response.access_token);
+      }
       
       // Set user in state
       setUser(response.user);
@@ -173,10 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiClient("auth/logout", {
         method: "POST",
-        requireAuth: true,
+        credentials: 'include',
       });
 
-      // Clear token from memory
+      // Clear token from memory (for backward compatibility)
       setAuthToken(null);
       
       setUser(null);

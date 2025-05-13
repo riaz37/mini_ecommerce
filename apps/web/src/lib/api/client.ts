@@ -1,5 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// We'll keep this for backward compatibility, but it won't be the primary auth method
 let inMemoryToken: string | null = null;
 
 type ApiClientOptions = {
@@ -28,33 +29,35 @@ export async function apiClient<T = any>(
     ...headers
   };
 
+  // We'll still include the token in the Authorization header if available
+  // for backward compatibility, but the primary auth will be via cookies
   const token = getAuthToken();
   if (token) {
     requestHeaders["Authorization"] = `Bearer ${token}`;
   }
 
-  if (requireAuth && !token && !endpoint.includes('/cart')) {
-    throw new Error("Authentication required");
-  }
-
   const config: RequestInit = {
     method,
     headers: requestHeaders,
-    credentials: 'include',
+    credentials: 'include', // This ensures cookies are sent with the request
     body: body ? JSON.stringify(body) : undefined,
   };
 
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  
+  console.log(`Making ${method} request to ${normalizedEndpoint}`, { 
+    withCredentials: true
+  });
 
   try {
     const response = await fetch(`${API_BASE_URL}${normalizedEndpoint}`, config);
 
-    if (response.status === 401 && inMemoryToken) {
+    if (response.status === 401) {
+      // Try to refresh the token
       const refreshed = await refreshToken();
       if (refreshed) {
         return apiClient(endpoint, options);
       } else {
-        setAuthToken(null);
         throw new Error("Session expired. Please login again.");
       }
     }
@@ -88,13 +91,12 @@ async function refreshToken(): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
-      credentials: 'include',
+      credentials: 'include', // Include cookies
     });
-
+    
     if (!response.ok) return false;
-
-    const data = await response.json();
-    setAuthToken(data.access_token);
+    
+    // We don't need to extract the token since it's in the cookies
     return true;
   } catch (error) {
     console.error("Token refresh failed:", error);

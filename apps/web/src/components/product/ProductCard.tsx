@@ -21,6 +21,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     setIsAddingToCart(true);
     try {
       await addItem(product, 1);
+      // Toast is now handled in the useCart hook
+    } catch (error) {
+      // Error toast is handled in the useCart hook
+      console.error("Error adding to cart:", error);
     } finally {
       setIsAddingToCart(false);
     }

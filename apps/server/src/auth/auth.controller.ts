@@ -65,8 +65,17 @@ export class AuthController {
       path: '/',
     });
     
-    // Return access token and user data
-    return { access_token, refresh_token, user };
+    // Set access token in HTTP-only cookie
+    response.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      path: '/',
+    });
+    
+    // Return user data (but not tokens since they're in cookies)
+    return { user };
   }
 
   @ApiOperation({ summary: 'Refresh access token' })
@@ -92,8 +101,17 @@ export class AuthController {
       path: '/',
     });
     
-    // Return both tokens in the response
-    return { access_token, refresh_token };
+    // Update access token cookie
+    response.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      path: '/',
+    });
+    
+    // Return user data
+    return { user };
   }
 
   @ApiOperation({ summary: 'Get current user information' })
@@ -122,6 +140,14 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) response: Response) {
     // Clear the refresh token cookie
     response.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+    
+    // Clear the access token cookie
+    response.clearCookie('access_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

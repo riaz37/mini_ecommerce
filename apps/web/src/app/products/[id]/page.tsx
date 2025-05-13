@@ -49,10 +49,10 @@ export default function ProductDetail() {
     if (product) {
       try {
         await addItem(product, quantity);
-        // Show success message or notification here
+        // Toast is now handled in the useCart hook
       } catch (error) {
         console.error("Error adding to cart:", error);
-        // Show error message
+        // Error toast is handled in the useCart hook
       }
     }
   };

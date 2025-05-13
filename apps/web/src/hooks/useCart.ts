@@ -1,6 +1,7 @@
 //@ts-nocheck
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import { PaymentMethod, Product, ShippingAddress } from "@/lib/types";
 import { hydrateCart } from "@/store/cartSlice";
 import {
@@ -132,9 +133,24 @@ export function useCart() {
     try {
       const updatedCart = await addToCart(product.id, quantity);
       updateReduxCart(updatedCart);
+      
+      // Show success toast
+      toast.success(`${product.name} added to cart!`, {
+        duration: 3000,
+        position: "bottom-right",
+        icon: "🛒",
+      });
+      
       return updatedCart;
     } catch (error) {
       handleApiError(error, "Failed to add item to cart");
+      
+      // Show error toast
+      toast.error("Failed to add item to cart", {
+        duration: 3000,
+        position: "bottom-right",
+      });
+      
       throw error;
     } finally {
       setIsLoading(false);
@@ -148,9 +164,23 @@ export function useCart() {
     try {
       const updatedCart = await updateCartItem(productId, quantity);
       updateReduxCart(updatedCart);
+      
+      // Show success toast
+      toast.success(`Cart updated!`, {
+        duration: 2000,
+        position: "bottom-right",
+      });
+      
       return updatedCart;
     } catch (error) {
       handleApiError(error, "Failed to update cart item");
+      
+      // Show error toast
+      toast.error("Failed to update cart", {
+        duration: 3000,
+        position: "bottom-right",
+      });
+      
       throw error;
     } finally {
       setIsLoading(false);
@@ -164,9 +194,23 @@ export function useCart() {
     try {
       const updatedCart = await removeCartItem(productId);
       updateReduxCart(updatedCart);
+      
+      // Show success toast
+      toast.success(`Item removed from cart`, {
+        duration: 2000,
+        position: "bottom-right",
+      });
+      
       return updatedCart;
     } catch (error) {
       handleApiError(error, "Failed to remove item from cart");
+      
+      // Show error toast
+      toast.error("Failed to remove item", {
+        duration: 3000,
+        position: "bottom-right",
+      });
+      
       throw error;
     } finally {
       setIsLoading(false);
@@ -188,9 +232,23 @@ export function useCart() {
       };
 
       dispatch(hydrateCart(normalizedCart));
+      
+      // Show success toast
+      toast.success(`Cart cleared`, {
+        duration: 2000,
+        position: "bottom-right",
+      });
+      
       return normalizedCart;
     } catch (error) {
       handleApiError(error, "Failed to clear cart");
+      
+      // Show error toast
+      toast.error("Failed to clear cart", {
+        duration: 3000,
+        position: "bottom-right",
+      });
+      
       throw error;
     } finally {
       setIsLoading(false);
