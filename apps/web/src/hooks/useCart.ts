@@ -52,44 +52,64 @@ export function useCart() {
     );
   };
 
+  // Fetch cart whenever user changes or on initial load
   useEffect(() => {
     const fetchCart = async () => {
       setIsLoading(true);
       try {
+        console.log("Fetching cart for user:", user?.id || "guest");
         const serverCart = await getCart();
+        console.log("Received cart from server:", serverCart);
         updateReduxCart(serverCart);
       } catch (err) {
-        console.error("Failed to fetch cart from Redis:", err);
+        console.error("Failed to fetch cart:", err);
+        setError(new Error("Failed to load your cart"));
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Fetch cart immediately
     fetchCart();
 
-    const refreshTimeout = setTimeout(() => {
-      if (user?.id) fetchCart();
-    }, 500);
-
-    return () => clearTimeout(refreshTimeout);
-  }, [dispatch, user?.id]);
+    // If user just logged in, fetch cart again after a short delay
+    // to ensure we get the latest user cart
+    if (user?.id) {
+      const refreshTimeout = setTimeout(() => {
+        console.log("Refreshing cart after user login");
+        fetchCart();
+      }, 1000);
+      
+      return () => clearTimeout(refreshTimeout);
+    }
+  }, [user?.id]);
 
   const handleCartMerge = async () => {
     if (mergeStatusRef.current.completed || mergeStatusRef.current.inProgress)
       return;
 
     try {
+      console.log("Starting cart merge process");
       mergeStatusRef.current.inProgress = true;
       globalMergeStatus.inProgress = true;
       setIsLoading(true);
 
       // Get the merged cart directly from the merge endpoint
       const mergedCart = await mergeCart();
+      console.log("Received merged cart from server:", mergedCart);
 
       // Update Redux with the merged cart data
       updateReduxCart(mergedCart);
 
+      // Force a refresh of the cart from the server to ensure consistency
+      const refreshedCart = await getCart();
+      updateReduxCart(refreshedCart);
+
       console.log("Cart merge successful", mergedCart);
+      toast.success("Your cart has been updated with previous items", {
+        duration: 3000,
+        position: "bottom-right",
+      });
 
       mergeStatusRef.current.completed = true;
       globalMergeStatus.completed = true;

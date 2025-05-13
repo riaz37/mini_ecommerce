@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/context/AuthContext";
 import CartItem from "@/components/cart/CartItem";
 import CartSummary from "@/components/cart/CartSummary";
 import Skeleton from "@/components/ui/Skeleton";
@@ -10,9 +11,19 @@ import { ShoppingCart, ShoppingBag, AlertCircle } from "lucide-react";
 
 export default function CartPage() {
   const { cart, isLoading, error } = useCart();
+  const { user } = useAuth();
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  
+  // Force refresh when user changes
+  useEffect(() => {
+    if (user?.id) {
+      console.log("User logged in, refreshing cart page");
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [user?.id]);
 
-  // Show loading state when cart is empty and loading
-  if (cart.items.length === 0 && isLoading) {
+  // Show loading state
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 flex items-center">

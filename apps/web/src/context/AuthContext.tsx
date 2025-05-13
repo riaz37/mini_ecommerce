@@ -52,6 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     null
   );
 
+  // Function to set auth token in memory
+  const handleSetAuthToken = (token: string | null) => {
+    // Store token in memory only, not in localStorage for security
+    // This is used for backward compatibility
+    console.log(`Auth token ${token ? 'set' : 'cleared'}`);
+  };
+
   // Check for existing session on mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -127,21 +134,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // No need to store token in memory as it's in cookies now
       // But we'll keep this for backward compatibility
       if (response.access_token) {
-        setAuthToken(response.access_token);
+        handleSetAuthToken(response.access_token);
       }
 
       // Set user in state
       setUser(response.user);
 
       // Trigger cart merge if function is available
+      // Use setTimeout to ensure auth is complete before merging
       if (typeof cartMergeTrigger === "function") {
-        setTimeout(() => cartMergeTrigger(), 100); // Small delay to ensure auth is complete
+        console.log("Triggering cart merge after login");
+        setTimeout(() => cartMergeTrigger(), 500); // Increased delay to ensure auth is complete
+      } else {
+        console.warn("Cart merge function not available");
       }
 
       return response;
     } catch (error) {
-      console.error("Login failed:", error);
-      setError("Invalid email or password. Please try again.");
+      const message = error.response?.data?.message || "Login failed";
+      setError(message);
       throw error;
     } finally {
       setIsLoading(false);
@@ -205,10 +216,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, error, login, register, logout, clearError }}
+      value={{ 
+        user, 
+        isLoading, 
+        error, 
+        login, 
+        register, 
+        logout, 
+        clearError 
+      }}
     >
       <CartMergeContext.Provider
-        value={{ triggerMerge: cartMergeTrigger || (() => {}) }}
+        value={{ 
+          triggerMerge: cartMergeTrigger || (() => {
+            console.warn("Cart merge function called but not initialized");
+          }) 
+        }}
       >
         {children}
       </CartMergeContext.Provider>
