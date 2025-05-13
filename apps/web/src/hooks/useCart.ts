@@ -265,13 +265,15 @@ export function useCart() {
     setError(null);
 
     try {
+      // Prepare checkout data, ensuring we only include customerId if user exists
       const checkoutData = {
-        customerId: user?.id,
         shippingAddress,
         paymentMethod: {
           type: paymentMethod.type,
           details: paymentMethod.details || {},
         },
+        // Only include customerId if user exists and has a valid customerId
+        ...(user?.id && user.customerId && { customerId: user.customerId }),
       };
 
       const response = await apiClient("/checkout", {
