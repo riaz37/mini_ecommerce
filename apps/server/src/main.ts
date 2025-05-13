@@ -13,7 +13,7 @@ async function bootstrap() {
   // Updated CORS configuration
   app.enableCors({
     origin: [
-      process.env.FRONTEND_URL || 'http://localhost:3000',
+      process.env.FRONTEND_URL || 'http://localhost:3000'||
       'https://ecommerce37.vercel.app'
     ],
     credentials: true,

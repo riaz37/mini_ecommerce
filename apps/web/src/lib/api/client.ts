@@ -11,7 +11,10 @@ export async function apiClient(
 
   // Base URL from environment variable
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-  const url = `${baseUrl}${endpoint}`;
+  
+  // Ensure endpoint starts with a slash
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${baseUrl}${normalizedEndpoint}`;
 
   // Default headers
   const defaultHeaders: Record<string, string> = {
