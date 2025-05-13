@@ -55,20 +55,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log("Checking authentication status...");
         // Try to refresh the token on initial load
         const refreshed = await refreshToken();
 
         if (!refreshed) {
+          console.log("Token refresh failed, user not authenticated");
           setUser(null);
           setIsLoading(false);
           return;
         }
 
+        console.log("Token refreshed successfully, fetching user data");
         // If refresh successful, get user data
         const userData = await apiClient("auth/me", {
           requireAuth: true,
         });
 
+        console.log("User data retrieved:", userData);
         setUser({
           id: userData.id,
           email: userData.email,

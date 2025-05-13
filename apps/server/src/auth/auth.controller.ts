@@ -73,7 +73,6 @@ export class AuthController {
       path: '/',
     });
 
-    // Return user data (but not tokens since they're in cookies)
     return { user, access_token };
   }
 

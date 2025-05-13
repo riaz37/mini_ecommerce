@@ -109,4 +109,22 @@ export class AuthService {
       expiresIn: '7d',
     });
   }
+
+  async getUserById(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      const { password, ...result } = user;
+      return result;
+    } catch (error) {
+      console.error(`Error getting user by ID ${userId}:`, error);
+      return null;
+    }
+  }
 }

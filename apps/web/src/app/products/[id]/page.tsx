@@ -34,7 +34,7 @@ export default function ProductDetail() {
         const sortedRatings = ratingsData.sort(
           (a, b) =>
             new Date(b.createdAt || 0).getTime() -
-            new Date(a.createdAt || 0).getTime(),
+            new Date(a.createdAt || 0).getTime()
         );
 
         setRatings(sortedRatings);
@@ -257,7 +257,7 @@ export default function ProductDetail() {
                                   year: "numeric",
                                   month: "long",
                                   day: "numeric",
-                                },
+                                }
                               )
                             : "Recent"}
                         </span>
