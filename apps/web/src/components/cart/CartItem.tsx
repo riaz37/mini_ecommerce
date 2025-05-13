@@ -108,7 +108,7 @@ export default function CartItem({ item }: CartItemProps) {
       <button
         onClick={handleRemove}
         disabled={isRemoving}
-        className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1"
+        className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 cursor-pointer disabled:cursor-not-allowed"
         aria-label="Remove item"
       >
         {isRemoving ? (
@@ -126,7 +126,7 @@ export default function CartItem({ item }: CartItemProps) {
         <button
           onClick={() => handleQuantityChange(item.quantity - 1)}
           disabled={isUpdating || item.quantity <= 1}
-          className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+          className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
         >
           <Minus className="h-4 w-4" />
         </button>
@@ -144,7 +144,7 @@ export default function CartItem({ item }: CartItemProps) {
         <button
           onClick={() => handleQuantityChange(item.quantity + 1)}
           disabled={isUpdating || item.quantity >= 10}
-          className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+          className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4" />
         </button>
