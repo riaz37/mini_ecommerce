@@ -127,4 +127,22 @@ export class AuthService {
       return null;
     }
   }
+
+  verifyToken(token: string) {
+    try {
+      return this.jwtService.verify(token);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+
+  verifyRefreshToken(token: string) {
+    try {
+      return this.jwtService.verify(token, {
+        secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
 }

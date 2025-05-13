@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Store token in memory only, not in localStorage for security
     // This is used for backward compatibility
     console.log(`Auth token ${token ? 'set' : 'cleared'}`);
+    setAuthToken(token);
   };
 
   // Check for existing session on mount
@@ -64,30 +65,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuth = async () => {
       try {
         console.log("Checking authentication status...");
-        // Try to refresh the token on initial load
-        const refreshed = await refreshToken();
+        setIsLoading(true);
+        
+        // Try to get user data, which will also refresh the token if needed
+        try {
+          const userData = await apiClient("auth/me", {
+            requireAuth: false, // Don't require auth header, we'll use cookies
+          });
 
-        if (!refreshed) {
-          console.log("Token refresh failed, user not authenticated");
+          console.log("User data retrieved:", userData);
+          setUser({
+            id: userData.id,
+            email: userData.email,
+            name: userData.name,
+            role: userData.role,
+            customerId: userData.customerId,
+          });
+        } catch (userError) {
+          console.error("Failed to fetch user data:", userError);
           setUser(null);
-          setIsLoading(false);
-          return;
         }
-
-        console.log("Token refreshed successfully, fetching user data");
-        // If refresh successful, get user data
-        const userData = await apiClient("auth/me", {
-          requireAuth: true,
-        });
-
-        console.log("User data retrieved:", userData);
-        setUser({
-          id: userData.id,
-          email: userData.email,
-          name: userData.name,
-          role: userData.role,
-          customerId: userData.customerId,
-        });
       } catch (err) {
         console.error("Failed to check auth:", err);
         setAuthToken(null);
@@ -99,28 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
   }, []);
-
-  // Function to refresh the access token
-  const refreshToken = async (): Promise<boolean> => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/auth/refresh`,
-        {
-          method: "POST",
-          credentials: "include", // Include cookies
-        }
-      );
-
-      if (!response.ok) return false;
-
-      const data = await response.json();
-      setAuthToken(data.access_token);
-      return true;
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-      return false;
-    }
-  };
 
   const login = async (credentials: { email: string; password: string }) => {
     setIsLoading(true);

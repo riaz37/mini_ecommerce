@@ -5,7 +5,6 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
-import { JwtRefreshStrategy } from './jwt-refresh.strategy';
 import { CommonModule } from '../common/common.module';
 
 @Module({
@@ -17,7 +16,7 @@ import { CommonModule } from '../common/common.module';
     }),
     CommonModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, JwtRefreshStrategy],
+  providers: [AuthService, JwtStrategy, LocalStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })
