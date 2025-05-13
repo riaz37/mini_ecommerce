@@ -8,6 +8,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { WebhookModule } from './webhook/webhook.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { WebhookModule } from './webhook/webhook.module';
     PrismaModule,
     RedisModule,
     WebhookModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
