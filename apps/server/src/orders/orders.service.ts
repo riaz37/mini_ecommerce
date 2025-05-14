@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { Cart, CartItem, CartWithTotals } from './types/cart.types';
 import { CheckoutDto, PaymentMethodType } from './dto/checkout.dto';
-import { OrderStatus } from '../../generated/prisma';
+import { OrderItem, OrderStatus } from '../../generated/prisma';
 
 @Injectable()
 export class OrdersService {
@@ -396,7 +396,7 @@ export class OrdersService {
           // Try to find a matching product in our database
           // We'll use a default product ID if we can't find a match
           const defaultProductId = await this.getDefaultProductId();
-          
+
           lineItems.push({
             productId: defaultProductId,
             quantity: item.quantity || 1,
@@ -447,11 +447,11 @@ export class OrdersService {
   private async getDefaultProductId(): Promise<string> {
     // Try to find any product in the database
     const product = await this.prisma.product.findFirst();
-    
+
     if (!product) {
       throw new Error('No products found in database to use as default');
     }
-    
+
     return product.id;
   }
 
@@ -473,5 +473,47 @@ export class OrdersService {
     throw new InternalServerErrorException(
       `${defaultMessage}: ${error.message || 'Unknown error'}`,
     );
+  }
+
+  async getUserOrders(userId: string) {
+    try {
+      // Get the customer ID associated with this user
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { customer: true },
+      });
+
+      if (!user || !user.customer) {
+        return [];
+      }
+
+      // Get all orders for this customer
+      const orders = await this.prisma.order.findMany({
+        where: { customerId: user.customer.id },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Transform the data to include product names
+      return orders.map((order) => ({
+        ...order,
+        items: order.items?.map((item: OrderItem) => ({
+          ...item,
+          name: (item as any).product?.name || 'Unknown Product',
+        })),
+      }));
+    } catch (error) {
+      this.handleError(error, 'Failed to retrieve user orders');
+    }
   }
 }

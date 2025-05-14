@@ -326,6 +326,22 @@ export class OrdersController {
     }
   }
 
+  @ApiOperation({ summary: 'Get user orders' })
+  @ApiResponse({ status: 200, description: 'Return user orders' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('user/orders')
+  async getUserOrders(@Request() req) {
+    try {
+      const userId = req.user.userId;
+      return this.ordersService.getUserOrders(userId);
+    } catch (error) {
+      console.error('Error getting user orders:', error);
+      throw new InternalServerErrorException('Failed to retrieve orders');
+    }
+  }
+
   // Helper method for consistent error handling in controllers
   private handleControllerError(error: any, defaultMessage: string): never {
     // If it's already a NestJS exception, rethrow it

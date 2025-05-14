@@ -115,7 +115,7 @@ export default function Header() {
                       Profile
                     </DropdownMenuItem>
                   </Link>
-                  <Link href="/orders" className="cursor-pointer">
+                  <Link href="/account/orders" className="cursor-pointer">
                     <DropdownMenuItem className="text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                       Orders
                     </DropdownMenuItem>
@@ -255,7 +255,7 @@ export default function Header() {
                     My Account
                   </Link>
                   <Link
-                    href="/orders"
+                    href="/account/orders"
                     className="text-gray-700 hover:text-blue-600"
                     onClick={() => setMobileMenuOpen(false)}
                   >

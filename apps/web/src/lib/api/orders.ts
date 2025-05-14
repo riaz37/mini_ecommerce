@@ -72,3 +72,7 @@ export async function cancelOrder(id: string) {
     requireAuth: true,
   });
 }
+
+export async function getUserOrders() {
+  return await apiClient("user/orders", { requireAuth: true });
+}
