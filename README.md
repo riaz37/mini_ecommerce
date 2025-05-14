@@ -196,6 +196,47 @@ This Turborepo uses Vercel Remote Caching for faster builds:
 npx turbo login
 npx turbo link
 ```
+## Environment Variables
+
+### Backend (apps/server)
+
+Create a `.env` file in the `apps/server` directory with the following variables:
+
+```bash
+# Database
+DATABASE_URL="mysql://root:password@localhost:3306/ecommerce"
+
+# JWT Authentication
+JWT_SECRET="your-jwt-secret-key"
+JWT_EXPIRATION="1d"
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# Admin User (for seeding)
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="admin123"
+ADMIN_NAME="Admin User"
+
+# Frontend URL (for CORS)
+FRONTEND_URL="http://localhost:3000"
+
+# Stripe (optional)
+STRIPE_SECRET_KEY="your-stripe-secret-key"
+STRIPE_WEBHOOK_SECRET="your-stripe-webhook-secret"
+```
+
+### Frontend (apps/web)
+
+Create a `.env.local` file in the `apps/web` directory with the following variables:
+
+```bash
+# API URL
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+
+```
+
+For production deployment, make sure to set these environment variables in your hosting platform (e.g., Vercel).
 
 ## Contributing
 
