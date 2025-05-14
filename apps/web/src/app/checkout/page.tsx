@@ -45,7 +45,7 @@ export default function CheckoutPage() {
     // Calculate subtotal from cart items
     const subtotal = cart.items.reduce(
       (sum, item) => sum + item.price * item.quantity,
-      0,
+      0
     );
 
     // Calculate shipping (free over $50)
@@ -96,7 +96,7 @@ export default function CheckoutPage() {
       // Use the checkout function from useCart hook
       const result = await checkout(
         data.shippingAddress as ShippingAddress,
-        paymentMethod as PaymentMethod,
+        paymentMethod as PaymentMethod
       );
 
       // If we get a URL back, it's a redirect to Stripe
@@ -318,23 +318,6 @@ export default function CheckoutPage() {
                                 Credit Card
                                 <p className="text-sm text-gray-500 font-normal mt-1">
                                   Pay with Visa, Mastercard, or American Express
-                                </p>
-                              </FormLabel>
-                            </FormItem>
-                          </div>
-
-                          <div className="border border-gray-200 rounded-lg p-4 transition-colors hover:bg-gray-50">
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="paypal" id="paypal" />
-                              </FormControl>
-                              <FormLabel
-                                htmlFor="paypal"
-                                className="font-medium cursor-pointer flex-1"
-                              >
-                                PayPal
-                                <p className="text-sm text-gray-500 font-normal mt-1">
-                                  Pay with your PayPal account
                                 </p>
                               </FormLabel>
                             </FormItem>
