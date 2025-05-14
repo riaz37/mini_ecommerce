@@ -110,7 +110,7 @@ export default function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-gray-200" />
-                  <Link href="/account" className="cursor-pointer">
+                  <Link href="/account/profile" className="cursor-pointer">
                     <DropdownMenuItem className="text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                       Profile
                     </DropdownMenuItem>

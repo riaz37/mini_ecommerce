@@ -59,29 +59,32 @@ export default function OrderHistoryPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-light flex items-center">
-          <Package className="mr-3 h-7 w-7 text-blue-600" />
-          Order History
+    <div className="container max-w-5xl mx-auto px-4 py-12">
+      <div className="flex items-center justify-between mb-10">
+        <h1 className="text-3xl font-light tracking-tight">
+          <span className="flex items-center gap-2">
+            <Package className="h-6 w-6 text-blue-500" />
+            Orders
+          </span>
         </h1>
-        <Button variant="ghost" asChild className="text-gray-600">
-          <Link href="/account/profile" className="flex items-center">
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Back to Profile
+        <Button variant="ghost" asChild size="sm" className="text-gray-600">
+          <Link href="/account/profile" className="flex items-center gap-1">
+            <ChevronLeft className="w-4 h-4" />
+            Back
           </Link>
         </Button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8 rounded-md">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0" />
             <p className="text-red-700">{error}</p>
           </div>
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
+            size="sm"
             className="mt-2"
           >
             Try Again
@@ -90,63 +93,61 @@ export default function OrderHistoryPage() {
       )}
 
       {!error && orders.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No orders yet
-            </h3>
-            <p className="text-gray-500 mb-6">
-              You haven't placed any orders yet.
-            </p>
-            <Button asChild>
-              <Link href="/products">Start Shopping</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
+          <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-gray-800 mb-2">No orders yet</h3>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            You haven't placed any orders yet. Browse our products and start shopping.
+          </p>
+          <Button asChild>
+            <Link href="/products">Browse Products</Link>
+          </Button>
+        </div>
       ) : (
         <div className="space-y-6">
           {orders.map((order) => (
-            <Card key={order.id} className="overflow-hidden">
-              <div className="bg-gray-50 p-4 flex flex-wrap justify-between items-center gap-4 border-b">
+            <div key={order.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-5 flex flex-wrap justify-between items-center gap-4 border-b border-gray-100">
                 <div>
-                  <p className="text-sm text-gray-500">Order ID</p>
-                  <p className="font-mono text-sm">{order.id}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Order ID</p>
+                  <p className="font-mono text-sm text-gray-600">{order.id.substring(0, 8)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Date</p>
-                  <p className="font-medium">
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Date</p>
+                  <p className="text-sm">
                     {new Date(order.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                     })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Status</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Status</p>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       order.status === "delivered"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-50 text-green-700"
                         : order.status === "shipped"
-                          ? "bg-blue-100 text-blue-800"
+                          ? "bg-blue-50 text-blue-700"
                           : order.status === "processing"
-                            ? "bg-yellow-100 text-yellow-800"
+                            ? "bg-amber-50 text-amber-700"
                             : order.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-gray-50 text-gray-700"
                     }`}
                   >
-                    {order.status.charAt(0) +
-                      order.status.slice(1).toLowerCase()}
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total</p>
-                  <p className="font-medium">${order.total.toFixed(2)}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Total</p>
+                  <p className="text-sm font-medium">
+                    ${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(order.total).toFixed(2)}
+                  </p>
                 </div>
                 <div>
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline" size="sm" className="rounded-full">
                     <Link href={`/order-confirmation/${order.id}`}>
                       View Details
                     </Link>
@@ -154,21 +155,24 @@ export default function OrderHistoryPage() {
                 </div>
               </div>
 
-              <CardContent className="p-4">
-                <h4 className="font-medium mb-3">Items</h4>
+              <div className="p-5">
+                <h4 className="text-xs text-gray-400 uppercase tracking-wider mb-3">Items</h4>
                 <div className="space-y-3">
                   {order.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-start gap-4 py-2 border-b border-gray-100 last:border-0"
+                      className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
                     >
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium truncate">
-                          {item.name || "Product"}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Qty: {item.quantity}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-100 rounded-md flex-shrink-0"></div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-800 truncate max-w-xs">
+                            {item.name || "Product"}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Qty: {item.quantity}
+                          </p>
+                        </div>
                       </div>
                       <div className="text-sm font-medium">
                         ${typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price).toFixed(2)}
@@ -176,8 +180,8 @@ export default function OrderHistoryPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
